@@ -5,6 +5,7 @@ on:
     branches:
     - 'master'
     - 'dev'
+    - 'update_libs'
     paths-ignore:
       - '**/README.md'
       - '**/README.rst'
