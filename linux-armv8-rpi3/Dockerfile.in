@@ -11,8 +11,8 @@ RUN apt-get update \
   qemu-user-static \
 && apt-get clean --yes
 
-# The CROSS_TRIPLE is a configured alias of the "armv8-rpi4-linux-gnueabihf" target.
-ENV CROSS_TRIPLE armv8-rpi4-linux-gnueabihf
+# The CROSS_TRIPLE is a configured alias of the "armv8-rpi3-linux-gnueabihf" target.
+ENV CROSS_TRIPLE armv8-rpi3-linux-gnueabihf
 
 ENV CROSS_ROOT ${XCC_PREFIX}/${CROSS_TRIPLE}
 ENV AS=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-as \
@@ -29,7 +29,7 @@ ENV QEMU_SET_ENV "LD_LIBRARY_PATH=${CROSS_ROOT}/lib:${QEMU_LD_PREFIX}"
 COPY Toolchain.cmake ${CROSS_ROOT}/
 ENV CMAKE_TOOLCHAIN_FILE ${CROSS_ROOT}/Toolchain.cmake
 
-ENV PKG_CONFIG_PATH /usr/lib/armv8-rpi4-linux-gnueabihf/pkgconfig
+ENV PKG_CONFIG_PATH /usr/lib/armv8-rpi3-linux-gnueabihf/pkgconfig
 
 # Linux kernel cross compilation variables
 ENV PATH ${PATH}:${CROSS_ROOT}/bin

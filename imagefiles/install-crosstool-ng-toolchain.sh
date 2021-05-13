@@ -57,12 +57,20 @@ mkdir -p "${CTNG}"
 cd "${CTNG}"
 
 # Download and install the "crosstool-ng" source.
-REV=1.24.0
-curl -# -LO \
-  "https://github.com/crosstool-ng/crosstool-ng/archive/crosstool-ng-${REV}.tar.gz"
-tar -xf "crosstool-ng-${REV}.tar.gz"
+#REV=1.24.0
+#curl -# -LO \
+#  "https://github.com/crosstool-ng/crosstool-ng/archive/crosstool-ng-${REV}.tar.gz"
+#tar -xf "crosstool-ng-${REV}.tar.gz"
 #patch crosstool-ng-crosstool-ng-1.23.0/scripts/build/companion_libs/210-expat.sh -i /dockcross/crosstool-ng-expat.patch
-cd "crosstool-ng-crosstool-ng-${REV}"
+#cd "crosstool-ng-crosstool-ng-${REV}"
+
+# Download and install the "crosstool-ng" source.
+# crosstool-ng master 2021-05-12
+COMMIT=f9716e8b9042eb14de85320987300aab99300df5
+
+git clone https://github.com/crosstool-ng/crosstool-ng.git
+cd "crosstool-ng"
+git checkout ${COMMIT}
 
 # Bootstrap and install the tool.
 BOOTSTRAP_PREFIX="${CTNG}/prefix"

@@ -40,6 +40,7 @@ RUN \
     unzip \
     libtool-bin \
     libtool-doc \
+    lzip \
   && \
   apt-get clean --yes
 # Add symlink for compatibility
