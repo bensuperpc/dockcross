@@ -34,8 +34,6 @@ ENV PKG_CONFIG_PATH /usr/lib/powerpc-unknown-linux-gnu/pkgconfig
 # Linux kernel cross compilation variables
 ENV PATH ${PATH}:${CROSS_ROOT}/bin
 ENV CROSS_COMPILE ${CROSS_TRIPLE}-
-ENV ARCH powerpc
-
-#include "common.lib"
+ENV ARCH powerpC
 
 #include "common.label-and-env"
