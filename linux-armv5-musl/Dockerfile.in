@@ -14,8 +14,8 @@ RUN apt-get update \
   qemu-user-static \
 && apt-get clean --yes
 
-# The CROSS_TRIPLE is a configured alias of the "armv5-unknown-linux-musleabi" target.
-ENV CROSS_TRIPLE armv5-unknown-linux-musleabi
+# The CROSS_TRIPLE is a configured alias of the "arm-unknown-linux-musleabi" target.
+ENV CROSS_TRIPLE arm-unknown-linux-musleabi
 ENV CROSS_ROOT ${XCC_PREFIX}/${CROSS_TRIPLE}
 ENV AS=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-as \
     AR=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-ar \
@@ -31,7 +31,7 @@ ENV QEMU_SET_ENV "LD_LIBRARY_PATH=${CROSS_ROOT}/lib:${QEMU_LD_PREFIX}"
 COPY Toolchain.cmake ${CROSS_ROOT}/
 ENV CMAKE_TOOLCHAIN_FILE ${CROSS_ROOT}/Toolchain.cmake
 
-ENV PKG_CONFIG_PATH /usr/lib/arm-linux-musleabihf/
+ENV PKG_CONFIG_PATH /usr/lib/arm-unknown-linux-musleabi/
 
 # Linux kernel cross compilation variables
 ENV PATH ${PATH}:${CROSS_ROOT}/bin
