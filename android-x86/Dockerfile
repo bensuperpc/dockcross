@@ -1,4 +1,5 @@
-FROM dockcross/base:latest
+FROM bensuperpc/base:latest
+MAINTAINER Bensuperpc "bensuperpc@gmail.com"
 
 RUN apt-get update && apt-get install -y unzip
 

@@ -1,8 +1,8 @@
 # Recent versions address yum functionality
 FROM quay.io/pypa/manylinux2014_i686:latest
-MAINTAINER Matt McCormick "matt.mccormick@kitware.com"
+MAINTAINER Bensuperpc "bensuperpc@gmail.com"
 
-ENV DEFAULT_DOCKCROSS_IMAGE dockcross/manylinux2014-x86
+ENV DEFAULT_DOCKCROSS_IMAGE bensuperpc/manylinux2014-x86
 
 #include "common.manylinux"
 

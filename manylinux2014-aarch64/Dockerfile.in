@@ -2,7 +2,8 @@
 # run the container on a x86_64 host.
 # This image is not based on "pypa/manylinux2014_aarch64" because it would require the host to be aarch64.
 # For more details, read https://github.com/dockcross/dockcross/issues/367
-FROM dockcross/manylinux2014-x64
+FROM bensuperpc/manylinux2014-x64
+MAINTAINER Bensuperpc "bensuperpc@gmail.com"
 
 # This is for 64-bit ARM Manylinux machine
 

@@ -1,5 +1,5 @@
 FROM emscripten/emsdk:2.0.20
-MAINTAINER Matt McCormick "matt.mccormick@kitware.com"
+MAINTAINER Bensuperpc "bensuperpc@gmail.com"
 
 # Revert back to "/bin/sh" as default shell
 # See https://github.com/asRIA/emscripten-docker/blob/master/Dockerfile.in#L4
