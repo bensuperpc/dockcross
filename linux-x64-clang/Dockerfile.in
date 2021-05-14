@@ -7,7 +7,10 @@ RUN apt-get update && \
     libssl-dev \
     libc++-dev \
     clang \
+    flang-7 \
     && apt-get clean --yes
+
+RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100 && update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 100
 
 ENV CROSS_TRIPLE x86_64-linux-gnu
 ENV CROSS_ROOT /usr/bin
@@ -17,7 +20,7 @@ ENV AS=/usr/bin/${CROSS_TRIPLE}-as \
     CPP=/usr/bin/clang-cpp \
     CXX=/usr/bin/clang++ \
     LD=/usr/bin/${CROSS_TRIPLE}-ld \
-    FC=/usr/bin/${CROSS_TRIPLE}-gfortran
+    FC=/usr/bin/${CROSS_TRIPLE}-flang
 
 COPY ${CROSS_TRIPLE}-noop.sh /usr/bin/${CROSS_TRIPLE}-noop
 
