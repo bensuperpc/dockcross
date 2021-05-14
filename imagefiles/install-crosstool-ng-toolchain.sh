@@ -66,11 +66,11 @@ cd "${CTNG}"
 
 # Download and install the "crosstool-ng" source.
 # crosstool-ng master 2021-05-12
-COMMIT=f9716e8b9042eb14de85320987300aab99300df5
+#COMMIT=f9716e8b9042eb14de85320987300aab99300df5
 
 git clone https://github.com/crosstool-ng/crosstool-ng.git
 cd "crosstool-ng"
-git checkout ${COMMIT}
+#git checkout ${COMMIT}
 
 # Bootstrap and install the tool.
 BOOTSTRAP_PREFIX="${CTNG}/prefix"

@@ -11,7 +11,8 @@ on:
   pull_request:
     branches:
     - '*'
-
+  schedule:
+    - cron: '0 7 * * 2'  # every tuesday at 7:00 https://crontab.guru/#0_7_*_*_1
 jobs:
   base:
     name: base
@@ -25,7 +26,7 @@ jobs:
       - name: archive base
         run: |
             mkdir -p cache
-            docker save -o ./cache/base.tar dockcross/base:latest
+            docker save -o ./cache/base.tar bensuperpc/base:latest
       - name: save base
         uses: actions/upload-artifact@v2
         with:
@@ -36,7 +37,7 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: |
             docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
-            docker image push dockcross/base
+            docker image push bensuperpc/base
 
   image:
     name: ${{ matrix.arch_name }}
@@ -64,7 +65,7 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: |
             docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
-            docker image push dockcross/${{ matrix.arch_name }}
+            docker image push bensuperpc/${{ matrix.arch_name }}
 # Docker images need to remove after deploy or tests, not enough memory to build all images on github action (14 GB of SSD)
       - name: clean
-        run: docker image rm -f dockcross/${{ matrix.arch_name }}
+        run: docker image rm -f bensuperpc/${{ matrix.arch_name }}
