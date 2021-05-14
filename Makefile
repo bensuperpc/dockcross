@@ -7,7 +7,7 @@
 DOCKER = docker
 
 # Docker organization to pull the images from
-ORG = dockcross
+ORG = bensuperpc
 
 # Directory where to generate the dockcross script for each images (e.g bin/dockcross-manylinux2014-x64)
 BIN = ./bin
@@ -97,7 +97,7 @@ web-wasm: web-wasm/Dockerfile
 
 web-wasm.test: web-wasm
 	cp -r test web-wasm/
-	$(DOCKER) run $(RM) dockcross/web-wasm > $(BIN)/dockcross-web-wasm && chmod +x $(BIN)/dockcross-web-wasm
+	$(DOCKER) run $(RM) bensuperpc/web-wasm > $(BIN)/dockcross-web-wasm && chmod +x $(BIN)/dockcross-web-wasm
 	$(BIN)/dockcross-web-wasm python test/run.py --exe-suffix ".js"
 	rm -rf web-wasm/test
 
@@ -122,7 +122,7 @@ manylinux2014-aarch64: manylinux2014-aarch64/Dockerfile
 	rm -rf $@/imagefiles
 
 manylinux2014-aarch64.test: manylinux2014-aarch64
-	$(DOCKER) run $(RM) dockcross/manylinux2014-aarch64 > $(BIN)/dockcross-manylinux2014-aarch64 && chmod +x $(BIN)/dockcross-manylinux2014-aarch64
+	$(DOCKER) run $(RM) bensuperpc/manylinux2014-aarch64 > $(BIN)/dockcross-manylinux2014-aarch64 && chmod +x $(BIN)/dockcross-manylinux2014-aarch64
 	$(BIN)/dockcross-manylinux2014-aarch64 /opt/python/cp38-cp38/bin/python test/run.py
 
 #
@@ -146,7 +146,7 @@ manylinux2014-x64: manylinux2014-x64/Dockerfile
 	rm -rf $@/imagefiles
 
 manylinux2014-x64.test: manylinux2014-x64
-	$(DOCKER) run $(RM) dockcross/manylinux2014-x64 > $(BIN)/dockcross-manylinux2014-x64 && chmod +x $(BIN)/dockcross-manylinux2014-x64
+	$(DOCKER) run $(RM) bensuperpc/manylinux2014-x64 > $(BIN)/dockcross-manylinux2014-x64 && chmod +x $(BIN)/dockcross-manylinux2014-x64
 	$(BIN)/dockcross-manylinux2014-x64 /opt/python/cp38-cp38/bin/python test/run.py
 
 #
@@ -170,7 +170,7 @@ manylinux2014-x86: manylinux2014-x86/Dockerfile
 	rm -rf $@/imagefiles
 
 manylinux2014-x86.test: manylinux2014-x86
-	$(DOCKER) run $(RM) dockcross/manylinux2014-x86 > $(BIN)/dockcross-manylinux2014-x86 && chmod +x $(BIN)/dockcross-manylinux2014-x86
+	$(DOCKER) run $(RM) bensuperpc/manylinux2014-x86 > $(BIN)/dockcross-manylinux2014-x86 && chmod +x $(BIN)/dockcross-manylinux2014-x86
 	$(BIN)/dockcross-manylinux2014-x86 /opt/python/cp38-cp38/bin/python test/run.py
 
 #
@@ -189,7 +189,7 @@ base: Dockerfile imagefiles/
 		.
 
 base.test: base
-	$(DOCKER) run $(RM) dockcross/base > $(BIN)/dockcross-base && chmod +x $(BIN)/dockcross-base
+	$(DOCKER) run $(RM) bensuperpc/base > $(BIN)/dockcross-base && chmod +x $(BIN)/dockcross-base
 
 #
 # display
@@ -225,7 +225,7 @@ $(STANDARD_IMAGES): %: %/Dockerfile base
 #
 .SECONDEXPANSION:
 $(addsuffix .test,$(STANDARD_IMAGES)): $$(basename $$@)
-	$(DOCKER) run $(RM) dockcross/$(basename $@) > $(BIN)/dockcross-$(basename $@) && chmod +x $(BIN)/dockcross-$(basename $@)
+	$(DOCKER) run $(RM) bensuperpc/$(basename $@) > $(BIN)/dockcross-$(basename $@) && chmod +x $(BIN)/dockcross-$(basename $@)
 	$(BIN)/dockcross-$(basename $@) python3 test/run.py $($@_ARGS)
 
 #
