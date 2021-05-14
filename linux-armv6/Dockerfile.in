@@ -12,8 +12,8 @@ RUN apt-get update \
 && apt-get clean --yes
 
 
-# The CROSS_TRIPLE is a configured alias of the "armv6-unknown-linux-gnueabihf" target.
-ENV CROSS_TRIPLE armv6-unknown-linux-gnueabihf
+# The CROSS_TRIPLE is a configured alias of the "armv6-rpi-linux-gnueabihf" target.
+ENV CROSS_TRIPLE armv6-rpi-linux-gnueabihf
 ENV CROSS_ROOT ${XCC_PREFIX}/${CROSS_TRIPLE}
 ENV AS=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-as \
     AR=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-ar \
@@ -35,7 +35,5 @@ ENV PKG_CONFIG_PATH /usr/lib/armv6-unknown-linux-gnueabihf/
 ENV PATH ${PATH}:${CROSS_ROOT}/bin
 ENV CROSS_COMPILE ${CROSS_TRIPLE}-
 ENV ARCH arm
-
-RUN cd /usr/xcc/ && find . -name '*linux*'
 
 #include "common.label-and-env"
