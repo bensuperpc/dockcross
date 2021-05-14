@@ -202,17 +202,18 @@ $(VERBOSE).SILENT: display_images
 #
 # build implicit rule
 #
-
 $(STANDARD_IMAGES): %: %/Dockerfile base
 	mkdir -p $@/imagefiles && cp -r imagefiles $@/
 	$(DOCKER) build -t $(ORG)/$@:latest \
 		--build-arg IMAGE=$(ORG)/$@ \
+		--build-arg DOCKER_IMAGE=$(ORG)/base:latest  \
 		--build-arg VCS_REF=`git rev-parse --short HEAD` \
 		--build-arg VCS_URL=`git config --get remote.origin.url` \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		$@
 	$(DOCKER) build -t $(ORG)/$@:$(TAG) \
 		--build-arg IMAGE=$(ORG)/$@ \
+		--build-arg DOCKER_IMAGE=$(ORG)/base:latest  \
 		--build-arg VERSION=$(TAG) \
 		--build-arg VCS_REF=`git rev-parse --short HEAD` \
 		--build-arg VCS_URL=`git config --get remote.origin.url` \
