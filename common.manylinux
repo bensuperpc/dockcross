@@ -14,7 +14,6 @@ RUN \
     pax \
     wget \
     zip \
-    lzip \ 
   && \
   yum clean all && \
   # Remove sudo provided by devtoolset since it doesn't work with
