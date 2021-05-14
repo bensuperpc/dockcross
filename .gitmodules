@@ -1,0 +1,3 @@
+[submodule "pvsneslib"]
+	path = pvsneslib
+	url = https://github.com/Bensuperpc/pvsneslib-docker.git

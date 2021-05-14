@@ -37,6 +37,9 @@ ENV PATH ${PATH}:${CROSS_ROOT}/bin
 ENV CROSS_COMPILE ${CROSS_TRIPLE}-
 ENV ARCH arm
 
+ENV OPENSSL_ARCH linux-armv4
+ENV OPENSSL_TARGET armv6
+
 #include "common.lib"
 
 #include "common.label-and-env"

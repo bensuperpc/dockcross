@@ -4,14 +4,15 @@
 RUN cd /tmp/ && git clone https://github.com/boostorg/boost.git && cd boost && git checkout boost-1.76.0 && git submodule update --init && \
     cd /tmp/boost/ && ./bootstrap.sh --without-libraries=mpi,python,regex,iostreams && \
     cd /tmp/boost/ && echo "using gcc : 8.4 : ${CXX} ; " >> tools/build/src/user-config.jam && \
-    cd /tmp/boost/ && ./b2 install --toolset=gcc-8.4 --prefix=/usr/local/boost threading=multi link=static && \
+    cd /tmp/boost/ && ./b2 install --toolset=gcc-8.4 --prefix=/usr/${CROSS_TRIPLE}/boost/ threading=multi link=static && \
+    export PATH="/usr/${CROSS_TRIPLE}/boost/bin:$PATH" && \
     rm -rf /tmp/boost/
 
 # OpenCV lib
 RUN cd /tmp/ && git clone https://github.com/opencv/opencv.git && git clone https://github.com/opencv/opencv_contrib.git && \
     cd /tmp/ && git -C opencv checkout 4.5.2 &&  git -C opencv_contrib checkout 4.5.2 && \
     cd /tmp/opencv/ && mkdir -p build && cmake -Bbuild -H. \
-    -GNinja \
+    -G Ninja \
     -D OPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
     -D CMAKE_BUILD_TYPE=RELEASE \
     -D OPENCV_ENABLE_NONFREE=ON \
@@ -27,11 +28,24 @@ RUN cd /tmp/ && git clone https://github.com/opencv/opencv.git && git clone http
     -D BUILD_NEW_PYTHON_SUPPORT=OFF \
     -D BUILD_opencv_python3=OFF \
     -D HAVE_opencv_python3=OFF \
-    -D PYTHON_DEFAULT_EXECUTABLE="" && \
+    -D PYTHON_DEFAULT_EXECUTABLE="" \
+    -D CMAKE_PREFIX_PATH="/usr/${CROSS_TRIPLE}/opencv" &&\
     cd /tmp/opencv && ninja -Cbuild && \
     cd /tmp/opencv/build && \
     ninja install && \
+    export PATH="/usr/${CROSS_TRIPLE}/opencv/bin:$PATH" && \
     rm -rf /tmp/opencv/ && rm -rf /tmp/opencv_contrib
 
-
-
+# OpenSSL lib
+ENV OPENSSL_VERSION="1.1.1k"
+RUN set -x \
+    && wget --no-check-certificate -O /tmp/openssl-${OPENSSL_VERSION}.tar.gz "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" \
+    && tar -xvf /tmp/openssl-${OPENSSL_VERSION}.tar.gz -C /tmp/ \
+    && rm -rf /tmp/openssl-${OPENSSL_VERSION}.tar.gz \ 
+    && cd /tmp/openssl-${OPENSSL_VERSION} \
+    && ./Configure -static -fPIC ${OPENSSL_ARCH} -march=${OPENSSL_TARGET} no-asm --cross-compile-prefix="" --prefix=/usr/${CROSS_TRIPLE}/ssl --openssldir=/usr/${CROSS_TRIPLE}/ssl \
+    && make -j$(nproc) \
+    && make install \
+    && export PATH="/usr/${CROSS_TRIPLE}/ssl/bin:$PATH" \
+    && cd .. \
+    && rm -rf openssl-${OPENSSL_VERSION}
