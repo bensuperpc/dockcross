@@ -1,3 +1,6 @@
 [submodule "pvsneslib"]
 	path = pvsneslib
 	url = https://github.com/Bensuperpc/pvsneslib-docker.git
+[submodule "cc65"]
+	path = cc65
+	url = https://github.com/Bensuperpc/cc65-docker.git

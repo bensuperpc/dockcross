@@ -44,6 +44,4 @@ ENV ARCH x86
 COPY linux32-entrypoint.sh /dockcross/
 ENTRYPOINT ["/dockcross/linux32-entrypoint.sh"]
 
-#include "common.lib"
-
 #include "common.label-and-env"
