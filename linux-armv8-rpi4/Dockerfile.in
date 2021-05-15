@@ -41,6 +41,4 @@ ENV ARCH arm64
 ENV OPENSSL_ARCH linux-aarch64
 ENV OPENSSL_TARGET armv8-a
 
-#include "common.lib"
-
 #include "common.label-and-env"

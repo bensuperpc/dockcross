@@ -1,0 +1,12 @@
+ARG DOCKER_IMAGE=bensuperpc/linux-armv7:latest
+FROM $DOCKER_IMAGE
+MAINTAINER Bensuperpc "bensuperpc@gmail.com"
+
+# This is for 32-bit ARMv7 Linux
+
+ENV OPENSSL_ARCH linux-armv4
+ENV OPENSSL_TARGET armv7-a
+
+#include "common.lib"
+
+#include "common.label-and-env"

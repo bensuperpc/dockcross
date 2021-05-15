@@ -13,11 +13,15 @@ ORG = bensuperpc
 BIN = ./bin
 
 # These images are built using the "build implicit rule"
+# EXTEND_STANDARD_IMAGES = linux-armv8-rpi4-all linux-armv8-rpi3-all
+
 STANDARD_IMAGES = avr linux-s390x android-arm android-arm64 android-x86 android-x86_64 linux-x86 linux-x64 linux-x64-clang linux-armv8 linux-armv8-musl linux-armv8-rpi3 linux-armv8-rpi4 linux-armv5 linux-m68k linux-armv5-musl linux-armv6-rpi1 linux-armv6-musl linux-armv6-rpi-old linux-armv7 linux-armv7a linux-armv7-rpi2 linux-armv7l-musl linux-mips linux-mips64 linux-mips64el-n64 linux-mipsel linux-ppc32 linux-ppc64 linux-riscv64 windows-static-x86 windows-static-x64 windows-static-x64-posix windows-shared-x86 windows-shared-x64 windows-shared-x64-posix
 
 # Generated Dockerfiles.
 GEN_IMAGES = avr linux-s390x android-arm android-arm64 linux-x86 linux-x64 linux-x64-clang linux-mips linux-mips64 linux-mipsel manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64 linux-m68k web-wasm linux-armv8 linux-armv8-musl linux-armv8-rpi3 linux-armv8-rpi4 linux-ppc32 linux-ppc64 windows-static-x86 windows-static-x64 windows-static-x64-posix windows-shared-x86 windows-shared-x64 windows-shared-x64-posix linux-mips64el-n64 linux-armv7 linux-armv7a linux-armv7l-musl linux-armv6-rpi1 linux-armv6-musl linux-armv6-rpi-old linux-armv7-rpi2 linux-armv5 linux-armv5-musl linux-riscv64
-GEN_IMAGE_DOCKERFILES = $(addsuffix /Dockerfile,$(GEN_IMAGES))
+EXT_GEN_IMAGES = linux-armv8-rpi4.full linux-armv8-rpi3.full linux-armv7-rpi2.full linux-armv7.full linux-armv7a.full linux-armv6-rpi1.full
+
+GEN_IMAGE_DOCKERFILES = $(addsuffix /Dockerfile,$(EXT_GEN_IMAGES)) $(addsuffix /Dockerfile,$(GEN_IMAGES))
 
 # These images are expected to have explicit rules for *both* build and testing
 NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64
@@ -25,7 +29,7 @@ NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014
 DOCKER_COMPOSITE_SOURCES = common.docker common.debian common.manylinux common.crosstool common.windows common-manylinux.crosstool common.dockcross common.lib common.label-and-env
 
 # This list all available images
-IMAGES = $(STANDARD_IMAGES) $(NON_STANDARD_IMAGES)
+IMAGES = $(STANDARD_IMAGES) $(NON_STANDARD_IMAGES) $(EXTEND_IMAGES)
 
 # Optional arguments for test runner (test/run.py) associated with "testing implicit rule"
 linux-ppc64.test_ARGS = --languages C
@@ -229,12 +233,32 @@ $(addsuffix .test,$(STANDARD_IMAGES)): $$(basename $$@)
 	$(DOCKER) run $(RM) bensuperpc/$(basename $@) > $(BIN)/dockcross-$(basename $@) && chmod +x $(BIN)/dockcross-$(basename $@)
 	$(BIN)/dockcross-$(basename $@) python3 test/run.py $($@_ARGS)
 
+.SECONDEXPANSION:
+$(addsuffix .full,$(STANDARD_IMAGES)): %: %/Dockerfile $$(basename $$@)
+	mkdir -p $@/imagefiles && cp -r imagefiles $@/
+	$(DOCKER) build -t $(ORG)/$@:latest \
+		--build-arg IMAGE=$(ORG)/$@ \
+		--build-arg DOCKER_IMAGE=$(ORG)/$(patsubst %.full,%,$@):latest  \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		$@
+	$(DOCKER) build -t $(ORG)/$@:$(TAG) \
+		--build-arg IMAGE=$(ORG)/$@ \
+		--build-arg DOCKER_IMAGE=$(ORG)/$(patsubst %.full,%,$@):latest  \
+		--build-arg VERSION=$(TAG) \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		$@
+	rm -rf $@/imagefiles
+
 #
 # testing prerequisites implicit rule
 #
 test.prerequisites:
 	mkdir -p $(BIN)
 
-$(addsuffix .test,base $(IMAGES)): test.prerequisites
+$(addsuffix .test,base,.full $(IMAGES)): test.prerequisites
 
-.PHONY: base images $(IMAGES) test %.test
+.PHONY: base images $(IMAGES) test %.test %.full

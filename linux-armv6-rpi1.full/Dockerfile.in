@@ -1,0 +1,10 @@
+ARG DOCKER_IMAGE=bensuperpc/linux-armv6-rpi1:latest
+FROM $DOCKER_IMAGE
+MAINTAINER Bensuperpc "bensuperpc@gmail.com"
+
+ENV OPENSSL_ARCH linux-armv4
+ENV OPENSSL_TARGET armv6
+
+#include "common.lib"
+
+#include "common.label-and-env"
