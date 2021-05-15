@@ -19,12 +19,12 @@ STANDARD_IMAGES = avr linux-s390x android-arm android-arm64 android-x86 android-
 
 # Generated Dockerfiles.
 GEN_IMAGES = avr linux-s390x android-arm android-arm64 linux-x86 linux-x64 linux-x64-clang linux-mips linux-mips64 linux-mipsel manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64 linux-m68k web-wasm linux-armv8 linux-armv8-musl linux-armv8-rpi3 linux-armv8-rpi4 linux-ppc32 linux-ppc64 windows-static-x86 windows-static-x64 windows-static-x64-posix windows-shared-x86 windows-shared-x64 windows-shared-x64-posix linux-mips64el-n64 linux-armv7 linux-armv7a linux-armv7l-musl linux-armv6-rpi1 linux-armv6-musl linux-armv6-rpi-old linux-armv7-rpi2 linux-armv5 linux-armv5-musl linux-riscv64
-EXT_GEN_IMAGES = linux-armv8-rpi4.full linux-armv8-rpi3.full linux-armv7-rpi2.full linux-armv7.full linux-armv7a.full linux-armv6-rpi1.full
+EXT_GEN_IMAGES = linux-armv8-rpi4.full linux-armv8-rpi3.full linux-armv7-rpi2.full linux-armv7.full linux-armv7a.full linux-armv6-rpi1.full linux-armv8.full
 
 GEN_IMAGE_DOCKERFILES = $(addsuffix /Dockerfile,$(EXT_GEN_IMAGES)) $(addsuffix /Dockerfile,$(GEN_IMAGES))
 
 # These images are expected to have explicit rules for *both* build and testing
-NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64
+NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64 pvsneslib cc65
 
 DOCKER_COMPOSITE_SOURCES = common.docker common.debian common.manylinux common.crosstool common.windows common-manylinux.crosstool common.dockcross common.lib common.label-and-env
 
@@ -78,6 +78,28 @@ $(GEN_IMAGE_DOCKERFILES) Dockerfile: %Dockerfile: %Dockerfile.in $(DOCKER_COMPOS
 		$< > $@
 
 #
+# cc65
+#
+cc65: cc65/Dockerfile
+	$(DOCKER) build -t $(ORG)/cc65:latest \
+	cc65
+
+cc65.test: cc65
+	$(DOCKER) build -t $(ORG)/cc65:latest \
+	cc65
+
+#
+# pvsneslib
+#
+pvsneslib: pvsneslib/Dockerfile
+	$(DOCKER) build -t $(ORG)/pvsneslib:latest \
+	pvsneslib
+
+pvsneslib.test: pvsneslib
+	$(DOCKER) build -t $(ORG)/pvsneslib:latest \
+	pvsneslib
+
+#
 # web-wasm
 #
 web-wasm: web-wasm/Dockerfile
@@ -101,7 +123,7 @@ web-wasm: web-wasm/Dockerfile
 
 web-wasm.test: web-wasm
 	cp -r test web-wasm/
-	$(DOCKER) run $(RM) bensuperpc/web-wasm > $(BIN)/dockcross-web-wasm && chmod +x $(BIN)/dockcross-web-wasm
+	$(DOCKER) run $(RM) $(ORG)/web-wasm > $(BIN)/dockcross-web-wasm && chmod +x $(BIN)/dockcross-web-wasm
 	$(BIN)/dockcross-web-wasm python test/run.py --exe-suffix ".js"
 	rm -rf web-wasm/test
 
@@ -126,7 +148,7 @@ manylinux2014-aarch64: manylinux2014-aarch64/Dockerfile
 	rm -rf $@/imagefiles
 
 manylinux2014-aarch64.test: manylinux2014-aarch64
-	$(DOCKER) run $(RM) bensuperpc/manylinux2014-aarch64 > $(BIN)/dockcross-manylinux2014-aarch64 && chmod +x $(BIN)/dockcross-manylinux2014-aarch64
+	$(DOCKER) run $(RM) $(ORG)/manylinux2014-aarch64 > $(BIN)/dockcross-manylinux2014-aarch64 && chmod +x $(BIN)/dockcross-manylinux2014-aarch64
 	$(BIN)/dockcross-manylinux2014-aarch64 /opt/python/cp38-cp38/bin/python test/run.py
 
 #
@@ -150,7 +172,7 @@ manylinux2014-x64: manylinux2014-x64/Dockerfile
 	rm -rf $@/imagefiles
 
 manylinux2014-x64.test: manylinux2014-x64
-	$(DOCKER) run $(RM) bensuperpc/manylinux2014-x64 > $(BIN)/dockcross-manylinux2014-x64 && chmod +x $(BIN)/dockcross-manylinux2014-x64
+	$(DOCKER) run $(RM) $(ORG)/manylinux2014-x64 > $(BIN)/dockcross-manylinux2014-x64 && chmod +x $(BIN)/dockcross-manylinux2014-x64
 	$(BIN)/dockcross-manylinux2014-x64 /opt/python/cp38-cp38/bin/python test/run.py
 
 #
@@ -174,7 +196,7 @@ manylinux2014-x86: manylinux2014-x86/Dockerfile
 	rm -rf $@/imagefiles
 
 manylinux2014-x86.test: manylinux2014-x86
-	$(DOCKER) run $(RM) bensuperpc/manylinux2014-x86 > $(BIN)/dockcross-manylinux2014-x86 && chmod +x $(BIN)/dockcross-manylinux2014-x86
+	$(DOCKER) run $(RM) $(ORG)/manylinux2014-x86 > $(BIN)/dockcross-manylinux2014-x86 && chmod +x $(BIN)/dockcross-manylinux2014-x86
 	$(BIN)/dockcross-manylinux2014-x86 /opt/python/cp38-cp38/bin/python test/run.py
 
 #
@@ -193,7 +215,7 @@ base: Dockerfile imagefiles/
 		.
 
 base.test: base
-	$(DOCKER) run $(RM) bensuperpc/base > $(BIN)/dockcross-base && chmod +x $(BIN)/dockcross-base
+	$(DOCKER) run $(RM) $(ORG)/base > $(BIN)/dockcross-base && chmod +x $(BIN)/dockcross-base
 
 #
 # display

@@ -19,7 +19,10 @@ jobs:
     name: base
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      uses: actions/checkout@v2.2.0
+      with:
+        submodules: 'recursive'
+        fetch-depth: 0
       - name: build
         run: make base
       - name: test
@@ -47,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 8
-# manylinux2014-aarch64
+# manylinux2014-aarch64 cc65 pvsneslib
       matrix:
         arch_name: [android-arm, android-arm64, android-x86, android-x86_64, web-wasm, linux-armv8, linux-armv8-musl, linux-armv8-rpi3, linux-armv8-rpi4, linux-armv5, linux-armv5-musl, linux-armv6-rpi1, linux-armv7-rpi2, linux-armv6-musl, linux-armv6-rpi-old, linux-armv7, linux-armv7a, linux-armv7l-musl, linux-mips, linux-mips64, linux-mips64el-n64, linux-mipsel, linux-m68k, linux-ppc32, linux-ppc64, linux-s390x, linux-x64, linux-x64-clang, linux-x86, linux-riscv64, manylinux2014-x64, manylinux2014-x86, windows-static-x64, windows-static-x64-posix, windows-static-x86, windows-shared-x64, windows-shared-x64-posix, windows-shared-x86]
     steps:
@@ -69,6 +72,7 @@ jobs:
             docker image push bensuperpc/${{ matrix.arch_name }}
       - name: clean
         run: docker image rm -f bensuperpc/${{ matrix.arch_name }}
+
   image_full:
     name: ${{ matrix.arch_name }}
     if: always()
@@ -78,7 +82,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        arch_name: [linux-armv8-rpi4.full, linux-armv8-rpi3.full, linux-armv7-rpi2.full, linux-armv7.full, linux-armv7a.full, linux-armv6-rpi1.full]
+        arch_name: [linux-armv8-rpi4.full, linux-armv8-rpi3.full, linux-armv7-rpi2.full, linux-armv7.full, linux-armv7a.full, linux-armv6-rpi1.full, linux-armv8.full]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
@@ -89,6 +93,7 @@ jobs:
         run: docker load -i ./cache/base.tar
 #      - name: load from hub docker
 #        run: docker image pull bensuperpc/${{ matrix.arch_name }}:latest
+#        continue-on-error: true
       - name: build
         run: make ${{ matrix.arch_name }}
 #      - name: test
