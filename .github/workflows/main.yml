@@ -12,7 +12,8 @@ on:
     branches:
     - '*'
   schedule:
-    - cron: '0 0 * * 0'  # Every sunday at 00:00 https://crontab.guru/#0_7_*_*_1
+#   - cron: '0 0 * * 0'  # Every sunday at 00:00 https://crontab.guru/#0_7_*_*_1
+    - cron: '0 0 17 * *'
 jobs:
   base:
     name: base
