@@ -259,6 +259,6 @@ $(addsuffix .full,$(STANDARD_IMAGES)): %: %/Dockerfile $$(basename $$@)
 test.prerequisites:
 	mkdir -p $(BIN)
 
-$(addsuffix .test,base $(IMAGES)): test.prerequisites
+$(addsuffix .test,base,.full $(IMAGES)): test.prerequisites
 
 .PHONY: base images $(IMAGES) test %.test %.full
