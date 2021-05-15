@@ -19,6 +19,7 @@ jobs:
     name: base
     runs-on: ubuntu-20.04
     steps:
+      - name: "checkout code"
       uses: actions/checkout@v2.2.0
       with:
         submodules: 'recursive'
