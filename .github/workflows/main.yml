@@ -12,7 +12,7 @@ on:
     branches:
     - '*'
   schedule:
-    - cron: '0 0 * * 2'  # Every tuesday at 00:00 https://crontab.guru/#0_7_*_*_1
+    - cron: '0 0 * * 0'  # Every sunday at 00:00 https://crontab.guru/#0_7_*_*_1
 jobs:
   base:
     name: base
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
-      max-parallel: 3
+#      max-parallel: 3
 # manylinux2014-aarch64
       matrix:
         arch_name: [android-arm, android-arm64, android-x86, android-x86_64, web-wasm, linux-armv8, linux-armv8-musl, linux-armv8-rpi3, linux-armv8-rpi4, linux-armv5, linux-armv5-musl, linux-armv6-rpi1, linux-armv7-rpi2, linux-armv6-musl, linux-armv6-rpi-old, linux-armv7, linux-armv7a, linux-armv7l-musl, linux-mips, linux-mips64, linux-mips64el-n64, linux-mipsel, linux-m68k, linux-ppc32, linux-ppc64, linux-s390x, linux-x64, linux-x64-clang, linux-x86, linux-riscv64, manylinux2014-x64, manylinux2014-x86, windows-static-x64, windows-static-x64-posix, windows-static-x86, windows-shared-x64, windows-shared-x64-posix, windows-shared-x86]
@@ -66,6 +66,35 @@ jobs:
         run: |
             docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
             docker image push bensuperpc/${{ matrix.arch_name }}
-# Docker images need to remove after deploy or tests, not enough memory to build all images on github action (14 GB of SSD)
+      - name: clean
+        run: docker image rm -f bensuperpc/${{ matrix.arch_name }}
+  image_full:
+    name: ${{ matrix.arch_name }}
+    needs: image
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        arch_name: [linux-armv8-rpi4.full, linux-armv8-rpi3.full, linux-armv7-rpi2.full, linux-armv7.full, linux-armv7a.full, linux-armv6-rpi1.full]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: cache
+          path: ./cache
+      - name: load base
+        run: docker load -i ./cache/base.tar
+#      - name: load from hub docker
+#        run: docker image pull bensuperpc/${{ matrix.arch_name }}:latest
+      - name: build
+        run: make ${{ matrix.arch_name }}
+#      - name: test
+#        run: make ${{ matrix.arch_name }}.test
+      - name: deploy
+        if: github.ref == 'refs/heads/master'
+        run: |
+            docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+            docker image push bensuperpc/${{ matrix.arch_name }}
       - name: clean
         run: docker image rm -f bensuperpc/${{ matrix.arch_name }}
