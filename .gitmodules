@@ -7,3 +7,6 @@
 [submodule "psn00bsdk"]
 	path = psn00bsdk
 	url = https://github.com/Bensuperpc/psn00bsdk-docker.git
+[submodule "sgdk"]
+	path = sgdk
+	url = https://github.com/Stephane-D/SGDK.git

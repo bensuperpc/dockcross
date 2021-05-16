@@ -24,7 +24,7 @@ EXT_GEN_IMAGES = linux-armv8-rpi4.full linux-armv8-rpi3.full linux-armv7-rpi2.fu
 GEN_IMAGE_DOCKERFILES = $(addsuffix /Dockerfile,$(EXT_GEN_IMAGES)) $(addsuffix /Dockerfile,$(GEN_IMAGES))
 
 # These images are expected to have explicit rules for *both* build and testing
-NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64 pvsneslib cc65 psn00bsdk
+NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64 pvsneslib cc65 psn00bsdk sgdk
 
 DOCKER_COMPOSITE_SOURCES = common.docker common.debian common.manylinux common.crosstool common.windows common-manylinux.crosstool common.dockcross common.lib common.label-and-env
 
@@ -54,6 +54,8 @@ TAG := $(shell date '+%Y%m%d')-$(shell git rev-parse --short HEAD)
 # images: This target builds all IMAGES (because it is the first one, it is built by default)
 #
 images: base $(IMAGES)
+
+all: base $(IMAGES)
 
 #
 # test: This target ensures all IMAGES are built and run the associated tests
@@ -85,8 +87,7 @@ cc65: cc65/Dockerfile
 	cc65
 
 cc65.test: cc65
-	$(DOCKER) build -t $(ORG)/cc65:latest \
-	cc65
+	echo "Not working now"
 
 #
 # pvsneslib
@@ -96,8 +97,7 @@ pvsneslib: pvsneslib/Dockerfile
 	pvsneslib
 
 pvsneslib.test: pvsneslib
-	$(DOCKER) build -t $(ORG)/pvsneslib:latest \
-	pvsneslib
+	echo "Not working now"
 
 #
 # psn00bsdk
@@ -107,8 +107,18 @@ psn00bsdk: psn00bsdk/Dockerfile
 	psn00bsdk
 
 psn00bsdk.test: psn00bsdk
-	$(DOCKER) build -t $(ORG)/psn00bsdk:latest \
-	psn00bsdk
+	echo "Not working now"
+
+#
+# sgdk
+#
+sgdk: sgdk/Dockerfile
+	$(DOCKER) build -t $(ORG)/sgdk:latest \
+	sgdk
+
+sgdk.test: sgdk
+	echo "Not working now"
+#	docker run --rm -v $(PWD)/sgdk/sample/sonic:/src $(ORG)/sgdk
 
 #
 # web-wasm
@@ -263,7 +273,7 @@ $(STANDARD_IMAGES): %: %/Dockerfile base
 #
 .SECONDEXPANSION:
 $(addsuffix .test,$(STANDARD_IMAGES)): $$(basename $$@)
-	$(DOCKER) run $(RM) bensuperpc/$(basename $@) > $(BIN)/dockcross-$(basename $@) && chmod +x $(BIN)/dockcross-$(basename $@)
+	$(DOCKER) run $(RM) $(ORG)/$(basename $@) > $(BIN)/dockcross-$(basename $@) && chmod +x $(BIN)/dockcross-$(basename $@)
 	$(BIN)/dockcross-$(basename $@) python3 test/run.py $($@_ARGS)
 
 .SECONDEXPANSION:
