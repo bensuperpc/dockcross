@@ -4,3 +4,6 @@
 [submodule "cc65"]
 	path = cc65
 	url = https://github.com/Bensuperpc/cc65-docker.git
+[submodule "psn00bsdk"]
+	path = psn00bsdk
+	url = https://github.com/Bensuperpc/psn00bsdk-docker.git

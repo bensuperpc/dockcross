@@ -24,7 +24,7 @@ EXT_GEN_IMAGES = linux-armv8-rpi4.full linux-armv8-rpi3.full linux-armv7-rpi2.fu
 GEN_IMAGE_DOCKERFILES = $(addsuffix /Dockerfile,$(EXT_GEN_IMAGES)) $(addsuffix /Dockerfile,$(GEN_IMAGES))
 
 # These images are expected to have explicit rules for *both* build and testing
-NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64 pvsneslib cc65
+NON_STANDARD_IMAGES = web-wasm manylinux2014-x64 manylinux2014-x86 manylinux2014-aarch64 pvsneslib cc65 psn00bsdk
 
 DOCKER_COMPOSITE_SOURCES = common.docker common.debian common.manylinux common.crosstool common.windows common-manylinux.crosstool common.dockcross common.lib common.label-and-env
 
@@ -98,6 +98,17 @@ pvsneslib: pvsneslib/Dockerfile
 pvsneslib.test: pvsneslib
 	$(DOCKER) build -t $(ORG)/pvsneslib:latest \
 	pvsneslib
+
+#
+# psn00bsdk
+#
+psn00bsdk: psn00bsdk/Dockerfile
+	$(DOCKER) build -t $(ORG)/psn00bsdk:latest \
+	psn00bsdk
+
+psn00bsdk.test: psn00bsdk
+	$(DOCKER) build -t $(ORG)/psn00bsdk:latest \
+	psn00bsdk
 
 #
 # web-wasm
@@ -283,4 +294,9 @@ test.prerequisites:
 
 $(addsuffix .test,base $(IMAGES)): test.prerequisites
 
-.PHONY: base images $(IMAGES) test %.test %.full
+clean:
+	for d in $(STANDARD_IMAGES) ; do rm -rf $$d/imagefiles ; done
+	for d in $(GEN_IMAGE_DOCKERFILES) ; do rm -rf $$d/Dockerfile ; done
+	rm -f Dockerfile
+
+.PHONY: base images $(IMAGES) test %.test %.full clean
