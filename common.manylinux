@@ -6,7 +6,7 @@ COPY \
 RUN \
   set -x && \
   yum -y install \
-    $([ "$DEFAULT_DOCKCROSS_IMAGE" = "dockcross/manylinux2014-x86" ] && echo "" || echo "epel-release") \
+    $([ "$DEFAULT_DOCKCROSS_IMAGE" = "dockcross/manylinux2014-x86" ] && echo "" || echo "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm") \
     gpg \
     zlib-devel \
     gettext \
