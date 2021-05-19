@@ -50,10 +50,10 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 4
 # manylinux2014-aarch64 cc65 pvsneslib
       matrix:
-        arch_name: [android-arm, android-arm64, android-x86, android-x86_64, web-wasm, linux-armv8, linux-armv8-musl, linux-armv8-rpi3, linux-armv8-rpi4, linux-armv5, linux-armv5-musl, linux-armv6-rpi1, linux-armv7-rpi2, linux-armv6-musl, linux-armv6-rpi-old, linux-armv7, linux-armv7a, linux-armv7l-musl, linux-mips, linux-mips64, linux-mips64el-n64, linux-mipsel, linux-m68k, linux-ppc32, linux-ppc64, linux-s390x, linux-x64, linux-x64-clang, linux-x86, linux-riscv64, manylinux2014-x64, manylinux2014-x86, windows-static-x64, windows-static-x64-posix, windows-static-x86, windows-shared-x64, windows-shared-x64-posix, windows-shared-x86]
+        arch_name: [linux-armv8, android-arm, android-arm64, android-x86, android-x86_64, web-wasm, linux-armv8-musl, linux-armv8-rpi3, linux-armv5, linux-armv5-musl, linux-armv6-rpi1, linux-armv7-rpi2, linux-armv6-musl, linux-armv6-rpi-old, linux-armv7, linux-armv7l-musl, linux-mips, linux-mips64, linux-mips64el-n64, linux-mipsel, linux-m68k, linux-ppc32, linux-ppc64, linux-s390x, linux-x64, linux-x64-clang, linux-x86, linux-riscv64, manylinux2014-x64, manylinux2014-x86, windows-static-x64, linux-armv7a, windows-static-x64-posix, windows-static-x86, windows-shared-x64, windows-shared-x64-posix, linux-armv8-rpi4, windows-shared-x86]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
@@ -76,7 +76,6 @@ jobs:
 
   image_full:
     name: ${{ matrix.arch_name }}
-    if: always()
     needs: image
     runs-on: ubuntu-20.04
     strategy:
@@ -112,7 +111,6 @@ jobs:
         run: docker image rm -f bensuperpc/${{ matrix.arch_name }}
   image_spec:
     name: ${{ matrix.arch_name }}
-    if: always()
     needs: image_full
     runs-on: ubuntu-20.04
     strategy:
