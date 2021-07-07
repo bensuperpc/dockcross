@@ -3,22 +3,24 @@ MAINTAINER Matt McCormick "matt.mccormick@kitware.com"
 
 # Crosstool-ng version
 # We use a git commit while waiting for 1.25 to release (1.24 is several years old)
-ENV CT_VERSION 9e10cb6fbaab6d83e1305b2d53ab585d14989667
+ENV CT_VERSION 94b98a4cc96ff6c4ca982ea19db953447e802919
 
-# This is for 32-bit ARMv6 Linux
-# Raspberry Pi is ARMv6+VFP2
+ENV QEMU_VERSION 6.0.0
+
 #include "common.crosstool"
 
-# The cross-compiling emulator
-RUN apt-get update \
-&& apt-get install -y \
-  qemu-user \
-  qemu-user-static \
-&& apt-get clean --yes
+ENV CROSS_TRIPLE m68k-unknown-uclinux-uclibc
 
+WORKDIR /usr/src
 
-# The CROSS_TRIPLE is a configured alias of the "armv6-unknown-linux-gnueabihf" target.
-ENV CROSS_TRIPLE armv6-unknown-linux-gnueabihf
+RUN apt-get install -y libglib2.0-dev zlib1g-dev libpixman-1-dev && \
+  curl -L http://wiki.qemu-project.org/download/qemu-${QEMU_VERSION}.tar.bz2 | tar xj && \
+  cd qemu-${QEMU_VERSION} && \
+  ./configure --target-list=m68k-softmmu --prefix=/usr && \
+  make -j$(nproc) && \
+  make install && \
+  cd .. && rm -rf qemu-${QEMU_VERSION}
+
 ENV CROSS_ROOT ${XCC_PREFIX}/${CROSS_TRIPLE}
 ENV AS=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-as \
     AR=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-ar \
@@ -31,14 +33,16 @@ ENV AS=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-as \
 ENV QEMU_LD_PREFIX "${CROSS_ROOT}/${CROSS_TRIPLE}/sysroot"
 ENV QEMU_SET_ENV "LD_LIBRARY_PATH=${CROSS_ROOT}/lib:${QEMU_LD_PREFIX}"
 
-COPY Toolchain.cmake ${CROSS_ROOT}/
-ENV CMAKE_TOOLCHAIN_FILE ${CROSS_ROOT}/Toolchain.cmake
+WORKDIR /work
 
-ENV PKG_CONFIG_PATH /usr/lib/arm-linux-gnueabihf/
+COPY Toolchain.cmake /usr/lib/${CROSS_TRIPLE}/
+ENV CMAKE_TOOLCHAIN_FILE /usr/lib/${CROSS_TRIPLE}/Toolchain.cmake
+
+ENV PKG_CONFIG_PATH /usr/lib/mk68-unknown-linux-uclibc/pkgconfig
 
 # Linux kernel cross compilation variables
 ENV PATH ${PATH}:${CROSS_ROOT}/bin
 ENV CROSS_COMPILE ${CROSS_TRIPLE}-
-ENV ARCH arm
+ENV ARCH powerpc
 
 #include "common.label-and-env"
