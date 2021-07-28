@@ -35,15 +35,15 @@ fi
 
 cd /usr/src
 
-CMAKE_ROOT=cmake-${CMAKE_VERSION}-Centos5-${ARCH}
-url=https://github.com/dockbuild/CMake/releases/download/v${CMAKE_VERSION}/${CMAKE_ROOT}.tar.gz
+CMAKE_ROOT="cmake-${CMAKE_VERSION}-Centos5-${ARCH}"
+url="https://github.com/dockbuild/CMake/releases/download/v${CMAKE_VERSION}/${CMAKE_ROOT}.tar.gz"
 echo "Downloading $url"
-curl -# -LO $url
+curl -# -LO "$url"
 
-tar -xzvf ${CMAKE_ROOT}.tar.gz
-rm -f ${CMAKE_ROOT}.tar.gz
+tar -xzvf "${CMAKE_ROOT}.tar.gz"
+rm -f "${CMAKE_ROOT}.tar.gz"
 
-cd ${CMAKE_ROOT}
+cd "${CMAKE_ROOT}"
 
 rm -rf doc man
 rm -rf bin/cmake-gui

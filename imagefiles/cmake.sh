@@ -19,4 +19,4 @@ case $1 in
 
 esac
 
-exec /usr/bin/cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE} "$@"
+exec /usr/bin/cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH="${CMAKE_TOOLCHAIN_FILE}" "$@"

@@ -25,13 +25,13 @@ function do_curl_build {
 
 function build_curl {
     local curl_fname=$1
-    check_var ${curl_fname}
+    check_var "${curl_fname}"
     local curl_sha256=$2
-    check_var ${curl_sha256}
-    check_var ${CURL_DOWNLOAD_URL}
-    curl -fsSLO ${CURL_DOWNLOAD_URL}/${curl_fname}.tar.gz
-    check_sha256sum ${curl_fname}.tar.gz ${curl_sha256}
-    tar -zxf ${curl_fname}.tar.gz
+    check_var "${curl_sha256}"
+    check_var "${CURL_DOWNLOAD_URL}"
+    curl -fsSLO "${CURL_DOWNLOAD_URL}/${curl_fname}.tar.gz"
+    check_sha256sum "${curl_fname}.tar.gz ${curl_sha256}"
+    tar -zxf "${curl_fname}.tar.gz"
     (cd curl-*/ && do_curl_build)
     rm -rf curl-*
 }

@@ -29,31 +29,31 @@ fi
 
 cd /usr/src
 
-git clone https://gitlab.kitware.com/cmake/cmake.git CMake -b v$CMAKE_VERSION --depth 1
+git clone https://gitlab.kitware.com/cmake/cmake.git CMake -b "v$CMAKE_VERSION" --depth 1
 
 mkdir /usr/src/CMake-build
 cd /usr/src/CMake-build
 
-${WRAPPER} /usr/src/CMake/bootstrap \
-  --parallel=$(nproc) \
+"${WRAPPER}" /usr/src/CMake/bootstrap \
+  --parallel="$(nproc)" \
   -- -DCMAKE_USE_OPENSSL=OFF
-${WRAPPER} make -j$(nproc)
+"${WRAPPER}" make -j"$(nproc)"
 
 
 mkdir /usr/src/CMake-ssl-build
 cd /usr/src/CMake-ssl-build
 
-${WRAPPER} /usr/src/CMake-build/bin/cmake \
+"${WRAPPER}" /usr/src/CMake-build/bin/cmake \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
-  -DCMAKE_INSTALL_PREFIX:PATH=/usr/src/cmake-$CMAKE_VERSION \
+  -DCMAKE_INSTALL_PREFIX:PATH="/usr/src/cmake-$CMAKE_VERSION" \
   -DCMAKE_USE_OPENSSL:BOOL=ON \
   -DOPENSSL_ROOT_DIR:PATH=/usr/local/ssl \
   ../CMake
-${WRAPPER} make -j$(nproc) install
+"${WRAPPER}" make -j"$(nproc)" install
 
 # Cleanup install tree
-cd /usr/src/cmake-$CMAKE_VERSION
+cd "/usr/src/cmake-$CMAKE_VERSION"
 rm -rf doc man
 
 # Install files

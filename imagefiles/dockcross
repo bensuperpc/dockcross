@@ -37,24 +37,24 @@ fi
 # Command handlers
 #
 command:update-image() {
-    $OCI_EXE pull $FINAL_IMAGE
+    $OCI_EXE pull "$FINAL_IMAGE"
 }
 
 help:update-image() {
-    echo Pull the latest $FINAL_IMAGE .
+    echo Pull the latest "$FINAL_IMAGE" .
 }
 
 command:update-script() {
-    if cmp -s <( $OCI_EXE run --rm $FINAL_IMAGE ) $0; then
+    if cmp -s <( "$OCI_EXE" run --rm "$FINAL_IMAGE" ) "$0"; then
         echo $0 is up to date
     else
         echo -n Updating $0 '... '
-        $OCI_EXE run --rm $FINAL_IMAGE > $0 && echo ok
+        "$OCI_EXE" run --rm "$FINAL_IMAGE" > "$0" && echo ok
     fi
 }
 
 help:update-image() {
-    echo Update $0 from $FINAL_IMAGE .
+    echo Update "$0" from "$FINAL_IMAGE" .
 }
 
 command:update() {
@@ -63,12 +63,12 @@ command:update() {
 }
 
 help:update() {
-    echo Pull the latest $FINAL_IMAGE, and then update $0 from that.
+    echo "Pull the latest $FINAL_IMAGE, and then update $0 from that."
 }
 
 command:help() {
     if [[ $# != 0 ]]; then
-        if ! has command $1; then
+        if ! has command "$1"; then
             err \"$1\" is not an dockcross command
             command:help
         elif ! has help $1; then
@@ -250,7 +250,7 @@ if [[ $rm_exit_code != 0 ]]; then
   fi
 fi
 
-exit $run_exit_code
+exit "$run_exit_code"
 
 ################################################################################
 #

@@ -27,10 +27,10 @@ url="https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar
 echo "Downloading $url"
 curl -# -LO $url
 
-tar xvzf git-${GIT_VERSION}.tar.gz  --no-same-owner
-rm -f git-${GIT_VERSION}.tar.gz
+tar xvzf "git-${GIT_VERSION}.tar.gz" --no-same-owner
+rm -f "git-${GIT_VERSION}.tar.gz"
 
-pushd git-${GIT_VERSION}
+pushd "git-${GIT_VERSION}"
 ./configure --prefix=/usr/local --with-curl
 make -j$(nproc)
 make install
@@ -38,7 +38,7 @@ popd
 
 ldconfig
 
-rm -rf git-${GIT_VERSION}
+rm -rf "git-${GIT_VERSION}"
 
 # turn the detached message off
 git config --global advice.detachedHead false
