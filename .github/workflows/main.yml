@@ -29,7 +29,7 @@ jobs:
           ignore: archlinux
           severity: warning
         env:
-          SHELLCHECK_OPTS: -s ${{ matrix.shell_type }}
+          SHELLCHECK_OPTS: -s bash
       - name: build
         run: make base
       - name: test
