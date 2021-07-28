@@ -6,11 +6,11 @@ DEFAULT_DOCKCROSS_IMAGE=dockcross/base  # DO NOT MOVE THIS LINE (see entrypoint.
 # Helpers
 #
 err() {
-    echo -e >&2 ERROR: $@\\n
+    echo -e ">&2 ERROR: $*\\n"
 }
 
 die() {
-    err $@
+    err "$@"
     exit 1
 }
 
@@ -19,7 +19,7 @@ has() {
     local kind=$1
     local name=$2
 
-    type -t $kind:$name | grep -q function
+    type -t "$kind:$name" | grep -q function
 }
 
 # If OCI_EXE is not already set, search for a container executor (OCI stands for "Open Container Initiative")
@@ -46,9 +46,9 @@ help:update-image() {
 
 command:update-script() {
     if cmp -s <( "$OCI_EXE" run --rm "$FINAL_IMAGE" ) "$0"; then
-        echo $0 is up to date
+        echo "$0" is up to date
     else
-        echo -n Updating $0 '... '
+        echo -n Updating "$0" '... '
         "$OCI_EXE" run --rm "$FINAL_IMAGE" > "$0" && echo ok
     fi
 }
@@ -71,10 +71,10 @@ command:help() {
         if ! has command "$1"; then
             err \"$1\" is not an dockcross command
             command:help
-        elif ! has help $1; then
+        elif ! has help "$1"; then
             err No help found for \"$1\"
         else
-            help:$1
+            help:"$1"
         fi
     else
         cat >&2 <<ENDHELP
@@ -246,7 +246,7 @@ if [[ $rm_exit_code != 0 ]]; then
     : # Ignore error because of https://circleci.com/docs/docker-btrfs-error/
   else
     echo "$rm_output"
-    exit $rm_exit_code
+    exit "$rm_exit_code"
   fi
 fi
 
