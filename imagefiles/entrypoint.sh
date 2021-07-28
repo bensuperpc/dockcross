@@ -37,16 +37,16 @@ if [[ -n $BUILDER_UID ]] && [[ -n $BUILDER_GID ]]; then
     fi
 
     # Enable passwordless sudo capabilities for the user
-    chown root:$BUILDER_GID $(which gosu)
-    chmod +s $(which gosu); sync
+    chown root:"$BUILDER_GID" "$(which gosu)"
+    chmod +s "$(which gosu)"; sync
 
     # Execute project specific pre execution hook
     if [[ -e /work/.dockcross ]]; then
-       gosu $BUILDER_UID:$BUILDER_GID /work/.dockcross
+       gosu "$BUILDER_UID:$BUILDER_GID" /work/.dockcross
     fi
 
     # Run the command as the specified user/group.
-    exec gosu $BUILDER_UID:$BUILDER_GID "$@"
+    exec gosu "$BUILDER_UID:$BUILDER_GID" "$@"
 else
     # Just run the command as root.
     exec "$@"

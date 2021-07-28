@@ -26,7 +26,7 @@ jobs:
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         with:
-          ignore: archlinux
+          ignore: build-and-install-cmake.sh
           severity: warning
         env:
           SHELLCHECK_OPTS: -s bash

@@ -73,7 +73,7 @@ cd crosstool-ng
 git fetch --tags
 
 # checkout 
-git checkout ${REV}
+git checkout "${REV}"
 
 if [ ${REV} = "crosstool-ng-1.23.0" ]; then
   patch scripts/build/companion_libs/210-expat.sh -i /dockcross/crosstool-ng-expat.patch
@@ -89,7 +89,7 @@ BOOTSTRAP_PREFIX="${CTNG}/prefix"
 ./bootstrap
 ./configure \
   --prefix "${BOOTSTRAP_PREFIX}"
-make -j$(nproc)
+make -j"$(nproc)"
 make install
 
 ##

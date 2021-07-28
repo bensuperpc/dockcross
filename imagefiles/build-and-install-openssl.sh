@@ -58,48 +58,48 @@ PERL_HASH=03b693901cd8ae807231b1787798cf1f2e0b8a56218d07b7da44f784a7caeb2c
 PERL_DOWNLOAD_URL=https://www.cpan.org/src/5.0
 
 function do_perl_build {
-    ${WRAPPER} sh Configure -des -Dprefix=/opt/perl > /dev/null
-    ${WRAPPER} make -j$(nproc) > /dev/null
-    ${WRAPPER} make install > /dev/null
+    "${WRAPPER}" sh Configure -des -Dprefix=/opt/perl > /dev/null
+    "${WRAPPER}" make -j$(nproc) > /dev/null
+    "${WRAPPER}" make install > /dev/null
 }
 
 function build_perl {
     local perl_fname=$1
-    check_var ${perl_fname}
+    check_var "${perl_fname}"
     local perl_sha256=$2
-    check_var ${perl_sha256}
-    check_var ${PERL_DOWNLOAD_URL}
-    curl -fsSLO ${PERL_DOWNLOAD_URL}/${perl_fname}.tar.gz
-    check_sha256sum ${perl_fname}.tar.gz ${perl_sha256}
-    tar -xzf ${perl_fname}.tar.gz
-    (cd ${perl_fname} && do_perl_build)
-    rm -rf ${perl_fname} ${perl_fname}.tar.gz
+    check_var "${perl_sha256}"
+    check_var "${PERL_DOWNLOAD_URL}"
+    curl -fsSLO "${PERL_DOWNLOAD_URL}/${perl_fname}.tar.gz"
+    check_sha256sum "${perl_fname}.tar.gz" "${perl_sha256}"
+    tar -xzf "${perl_fname}.tar.gz"
+    (cd $"{perl_fname}" && do_perl_build)
+    rm -rf "${perl_fname}" "${perl_fname}.tar.gz"
 }
 
 function do_openssl_build {
-    ${WRAPPER} ./config no-shared -fPIC $CONFIG_FLAG --prefix=/usr/local/ssl --openssldir=/usr/local/ssl > /dev/null
-    ${WRAPPER} make -j$(nproc) > /dev/null
-    ${WRAPPER} make install_sw > /dev/null
+    "${WRAPPER}" ./config no-shared -fPIC "$CONFIG_FLAG" --prefix=/usr/local/ssl --openssldir=/usr/local/ssl > /dev/null
+    "${WRAPPER}" make -j$(nproc) > /dev/null
+    "${WRAPPER}" make install_sw > /dev/null
 }
 
 function build_openssl {
     local openssl_fname=$1
-    check_var ${openssl_fname}
+    check_var "${openssl_fname}"
     local openssl_sha256=$2
-    check_var ${openssl_sha256}
-    check_var ${OPENSSL_DOWNLOAD_URL}
-    curl -fsSLO ${OPENSSL_DOWNLOAD_URL}/${openssl_fname}.tar.gz
-    check_sha256sum ${openssl_fname}.tar.gz ${openssl_sha256}
-    tar -xzf ${openssl_fname}.tar.gz
-    (cd ${openssl_fname} && PATH=/opt/perl/bin:${PATH} do_openssl_build)
-    rm -rf ${openssl_fname} ${openssl_fname}.tar.gz
+    check_var "${openssl_sha256}"
+    check_var" ${OPENSSL_DOWNLOAD_URL}"
+    curl -fsSLO "${OPENSSL_DOWNLOAD_URL}/${openssl_fname}.tar.gz"
+    check_sha256sum "${openssl_fname}.tar.gz" "${openssl_sha256}"
+    tar -xzf "${openssl_fname}.tar.gz"
+    (cd "${openssl_fname}" && PATH="/opt/perl/bin:${PATH}" do_openssl_build)
+    rm -rf "${openssl_fname}" "${openssl_fname}.tar.gz"
     # Cleanup install tree
     rm -rf /usr/ssl/man
 }
 
 cd /usr/src
-build_perl $PERL_ROOT $PERL_HASH
-build_openssl $OPENSSL_ROOT $OPENSSL_HASH
+build_perl "$PERL_ROOT" "$PERL_HASH"
+build_openssl "$OPENSSL_ROOT" "$OPENSSL_HASH"
 
 # Delete PERL
 rm -rf /opt/perl
