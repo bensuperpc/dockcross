@@ -24,7 +24,7 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@1.1.0
+        uses: ludeeus/action-shellcheck@master
         with:
           ignore: archlinux
           severity: warning
