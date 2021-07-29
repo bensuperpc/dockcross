@@ -152,7 +152,7 @@ done
 # Source the config file if it exists
 DEFAULT_DOCKCROSS_CONFIG=~/.dockcross
 FINAL_CONFIG=${ARG_CONFIG-${DOCKCROSS_CONFIG-$DEFAULT_DOCKCROSS_CONFIG}}
-# shellcheck source=~/.dockcross
+
 [[ -f "$FINAL_CONFIG" ]] && source "$FINAL_CONFIG"
 
 # Set the docker image
