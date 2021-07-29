@@ -69,7 +69,7 @@ file(
 list(GET status 0 error_code)
 list(GET status 1 error_msg)
 if(error_code)
-  message(FATAL_ERROR "error: Failed to download ${url} - ${error_msg}")
+  message(FATAL_ERROR "error: Failed to download \${url} - \${error_msg}")
 else()
   message(STATUS "CMake: HTTPS download works")
 endif()

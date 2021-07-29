@@ -59,7 +59,7 @@ PERL_DOWNLOAD_URL=https://www.cpan.org/src/5.0
 
 function do_perl_build {
     "${WRAPPER}" sh Configure -des -Dprefix=/opt/perl > /dev/null
-    "${WRAPPER}" make -j$(nproc) > /dev/null
+    "${WRAPPER}" make -j"$(nproc)" > /dev/null
     "${WRAPPER}" make install > /dev/null
 }
 
@@ -72,13 +72,13 @@ function build_perl {
     curl -fsSLO "${PERL_DOWNLOAD_URL}/${perl_fname}.tar.gz"
     check_sha256sum "${perl_fname}.tar.gz" "${perl_sha256}"
     tar -xzf "${perl_fname}.tar.gz"
-    (cd $"{perl_fname}" && do_perl_build)
+    (cd "${perl_fname}" && do_perl_build)
     rm -rf "${perl_fname}" "${perl_fname}.tar.gz"
 }
 
 function do_openssl_build {
     "${WRAPPER}" ./config no-shared -fPIC "$CONFIG_FLAG" --prefix=/usr/local/ssl --openssldir=/usr/local/ssl > /dev/null
-    "${WRAPPER}" make -j$(nproc) > /dev/null
+    "${WRAPPER}" make -j"$(nproc)" > /dev/null
     "${WRAPPER}" make install_sw > /dev/null
 }
 
