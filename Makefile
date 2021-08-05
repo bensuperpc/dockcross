@@ -221,6 +221,109 @@ manylinux2014-x86.test: manylinux2014-x86
 	$(BIN)/dockcross-manylinux2014-x86 /opt/python/cp38-cp38/bin/python test/run.py
 
 #
+<<<<<<< HEAD
+=======
+# manylinux2010-x64
+#
+
+manylinux2010-x64: manylinux2010-x64/Dockerfile
+	mkdir -p $@/imagefiles && cp -r imagefiles $@/
+	$(DOCKER) build -t $(ORG)/manylinux2010-x64:latest \
+		--build-arg IMAGE=$(ORG)/manylinux2010-x64 \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux2010-x64/Dockerfile .
+	$(DOCKER) build -t $(ORG)/manylinux2010-x64:$(TAG) \
+		--build-arg IMAGE=$(ORG)/manylinux2010-x64 \
+		--build-arg VERSION=$(TAG) \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux2010-x64/Dockerfile .
+	rm -rf $@/imagefiles
+
+manylinux2010-x64.test: manylinux2010-x64
+	$(DOCKER) run $(RM) dockcross/manylinux2010-x64 > $(BIN)/dockcross-manylinux2010-x64 && chmod +x $(BIN)/dockcross-manylinux2010-x64
+	$(BIN)/dockcross-manylinux2010-x64 /opt/python/cp38-cp38/bin/python test/run.py
+
+#
+# manylinux2010-x86
+#
+
+manylinux2010-x86: manylinux2010-x86/Dockerfile
+	mkdir -p $@/imagefiles && cp -r imagefiles $@/
+	$(DOCKER) build -t $(ORG)/manylinux2010-x86:latest \
+		--build-arg IMAGE=$(ORG)/manylinux2010-x86 \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux2010-x86/Dockerfile .
+	$(DOCKER) build -t $(ORG)/manylinux2010-x86:$(TAG) \
+		--build-arg IMAGE=$(ORG)/manylinux2010-x86 \
+		--build-arg VERSION=$(TAG) \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux2010-x86/Dockerfile .
+	rm -rf $@/imagefiles
+
+manylinux2010-x86.test: manylinux2010-x86
+	$(DOCKER) run $(RM) $(ORG)/manylinux2010-x86 > $(BIN)/dockcross-manylinux2010-x86 && chmod +x $(BIN)/dockcross-manylinux2010-x86
+	$(BIN)/dockcross-manylinux2010-x86 /opt/python/cp38-cp38/bin/python test/run.py
+
+#
+# manylinux1-x64
+#
+
+manylinux1-x64: manylinux1-x64/Dockerfile
+	mkdir -p $@/imagefiles && cp -r imagefiles $@/
+	$(DOCKER) build -t $(ORG)/manylinux1-x64:latest \
+		--build-arg IMAGE=$(ORG)/manylinux1-x64 \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux1-x64/Dockerfile .
+	$(DOCKER) build -t $(ORG)/manylinux1-x64:$(TAG) \
+		--build-arg IMAGE=$(ORG)/manylinux1-x64 \
+		--build-arg VERSION=$(TAG) \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux1-x64/Dockerfile .
+	rm -rf $@/imagefiles
+
+manylinux1-x64.test: manylinux1-x64
+	$(DOCKER) run $(RM) $(ORG)/manylinux1-x64 > $(BIN)/dockcross-manylinux1-x64 && chmod +x $(BIN)/dockcross-manylinux1-x64
+	$(BIN)/dockcross-manylinux1-x64 /opt/python/cp38-cp38/bin/python test/run.py
+
+#
+# manylinux1-x86
+#
+
+manylinux1-x86: manylinux1-x86/Dockerfile
+	mkdir -p $@/imagefiles && cp -r imagefiles $@/
+	$(DOCKER) build -t $(ORG)/manylinux1-x86:latest \
+		--build-arg IMAGE=$(ORG)/manylinux1-x86 \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux1-x86/Dockerfile .
+	$(DOCKER) build -t $(ORG)/manylinux1-x86:$(TAG) \
+		--build-arg IMAGE=$(ORG)/manylinux1-x86 \
+		--build-arg VERSION=$(TAG) \
+		--build-arg VCS_REF=`git rev-parse --short HEAD` \
+		--build-arg VCS_URL=`git config --get remote.origin.url` \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		-f manylinux1-x86/Dockerfile .
+	rm -rf $@/imagefiles
+
+manylinux1-x86.test: manylinux1-x86
+	$(DOCKER) run $(RM) $(ORG)/manylinux1-x86 > $(BIN)/dockcross-manylinux1-x86 && chmod +x $(BIN)/dockcross-manylinux1-x86
+	$(BIN)/dockcross-manylinux1-x86 /opt/python/cp38-cp38/bin/python test/run.py
+
+#
+>>>>>>> 9adf96c16b00759a9f7f69be3e61b5e16cdd6ac4
 # base
 #
 
@@ -268,12 +371,18 @@ $(STANDARD_IMAGES): %: %/Dockerfile base
 		$@
 	rm -rf $@/imagefiles
 
+clean:
+	for d in $(STANDARD_IMAGES) ; do rm -rf $$d/imagefiles ; done
+	for d in $(GEN_IMAGE_DOCKERFILES) ; do rm -f $$d/Dockerfile ; done
+	rm -f Dockerfile
+
 #
 # testing implicit rule
 #
 .SECONDEXPANSION:
 $(addsuffix .test,$(STANDARD_IMAGES)): $$(basename $$@)
 	$(DOCKER) run $(RM) $(ORG)/$(basename $@) > $(BIN)/dockcross-$(basename $@) && chmod +x $(BIN)/dockcross-$(basename $@)
+<<<<<<< HEAD
 	$(BIN)/dockcross-$(basename $@) python3 test/run.py $($@_ARGS)
 
 .SECONDEXPANSION:
@@ -295,6 +404,9 @@ $(addsuffix .full,$(STANDARD_IMAGES)): %: %/Dockerfile $$(basename $$@)
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		$@
 	rm -rf $@/imagefiles
+=======
+	$(BIN)/dockcross-$(basename $@) python test/run.py $($@_ARGS)
+>>>>>>> 9adf96c16b00759a9f7f69be3e61b5e16cdd6ac4
 
 #
 # testing prerequisites implicit rule
@@ -304,9 +416,13 @@ test.prerequisites:
 
 $(addsuffix .test,base $(IMAGES)): test.prerequisites
 
+<<<<<<< HEAD
 clean:
 	for d in $(STANDARD_IMAGES) ; do rm -rf $$d/imagefiles ; done
 	for d in $(GEN_IMAGE_DOCKERFILES) ; do rm -rf $$d/Dockerfile ; done
 	rm -f Dockerfile
 
 .PHONY: base images $(IMAGES) test %.test %.full clean
+=======
+.PHONY: base images $(IMAGES) test %.test clean
+>>>>>>> 9adf96c16b00759a9f7f69be3e61b5e16cdd6ac4

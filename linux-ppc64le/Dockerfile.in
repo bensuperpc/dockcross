@@ -2,6 +2,7 @@ ARG DOCKER_IMAGE=bensuperpc/base:latest
 FROM $DOCKER_IMAGE
 MAINTAINER Bensuperpc "bensuperpc@gmail.com"
 
+<<<<<<< HEAD
 # This is for 64-bit PowerPC Linux machine
 
 #include "common.crosstool"
@@ -15,6 +16,21 @@ RUN apt-get update \
 
 # The CROSS_TRIPLE is a configured alias of the "powerpc64le-unknown-linux-gnu" target.
 ENV CROSS_TRIPLE powerpc64le-unknown-linux-gnu
+=======
+#include "common.crosstool"
+
+ENV CROSS_TRIPLE powerpc64le-linux-gnu
+
+WORKDIR /usr/src
+
+RUN apt-get install -y libglib2.0-dev zlib1g-dev libpixman-1-dev && \
+  curl -L http://wiki.qemu-project.org/download/qemu-3.1.0.tar.bz2 | tar xj && \
+  cd qemu-3.1.0 && \
+  ./configure --target-list=ppc64le-linux-user --prefix=/usr && \
+  make -j$(nproc) && \
+  make install && \
+  cd .. && rm -rf qemu-3.1.0
+>>>>>>> 9adf96c16b00759a9f7f69be3e61b5e16cdd6ac4
 
 ENV CROSS_ROOT ${XCC_PREFIX}/${CROSS_TRIPLE}
 ENV AS=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-as \

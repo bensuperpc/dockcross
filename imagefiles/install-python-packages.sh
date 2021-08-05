@@ -23,6 +23,10 @@ cd /tmp
 # Todo: Need to update base image from Debian Stretch for the required Python
 # 3.6 or later
 curl -# -LO https://bootstrap.pypa.io/pip/get-pip.py
+<<<<<<< HEAD
+=======
+#curl -# -LO https://bootstrap.pypa.io/pip/2.7/get-pip.py
+>>>>>>> 9adf96c16b00759a9f7f69be3e61b5e16cdd6ac4
 ${PYTHON} get-pip.py --ignore-installed
 rm get-pip.py
 
