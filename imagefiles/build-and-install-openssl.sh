@@ -53,13 +53,13 @@ OPENSSL_HASH=892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5
 OPENSSL_DOWNLOAD_URL=http://www.openssl.org/source/
 
 # a recent enough perl is needed to build openssl
-PERL_ROOT=perl-5.32.1
+PERL_ROOT=perl-5.32.2
 PERL_HASH=03b693901cd8ae807231b1787798cf1f2e0b8a56218d07b7da44f784a7caeb2c
 PERL_DOWNLOAD_URL=https://www.cpan.org/src/5.0
 
 function do_perl_build {
     ${WRAPPER} sh Configure -des -Dprefix=/opt/perl > /dev/null
-    ${WRAPPER} make -j$(nproc) > /dev/null
+    ${WRAPPER} make -j"$(nproc)" > /dev/null
     ${WRAPPER} make install > /dev/null
 }
 
@@ -84,7 +84,7 @@ function build_perl {
 
 function do_openssl_build {
     ${WRAPPER} ./config no-shared -fPIC $CONFIG_FLAG --prefix=/usr/local/ssl --openssldir=/usr/local/ssl > /dev/null
-    ${WRAPPER} make -j$(nproc) > /dev/null
+    ${WRAPPER} make -j"$(nproc)" > /dev/null
     ${WRAPPER} make install_sw > /dev/null
 }
 

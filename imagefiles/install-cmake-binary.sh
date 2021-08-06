@@ -28,7 +28,7 @@ if ! command -v tar &> /dev/null; then
 	exit 1
 fi
 
-if [[ "${CMAKE_VERSION}" == "" ]]; then
+if [[ -z "${CMAKE_VERSION}" ]]; then
   echo >&2 'error: CMAKE_VERSION env. variable must be set to a non-empty value'
   exit 1
 fi

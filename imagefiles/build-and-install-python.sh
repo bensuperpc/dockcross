@@ -26,12 +26,12 @@ done
 
 # Download
 wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
-tar xvf Python-${PYTHON_VERSION}.tgz
+tar xvf "Python-${PYTHON_VERSION}.tgz"
 # Configure, build and install
-cd Python-${PYTHON_VERSION}
+cd "Python-${PYTHON_VERSION}"
 # Disable --enable-shared --enable-optimizations --prefix=/usr/local/python-${PYTHON_VERSION}
 ./configure --with-ensurepip=install
-make -j$(nproc) 
+make -j"$(nproc)"
 make install #altinstall
 
 ln -s /usr/local/bin/python3 /usr/local/bin/python
@@ -39,4 +39,4 @@ ln -s /usr/local/bin/pip3 /usr/local/bin/pip
 
 # Clean
 cd ..
-rm -rf Python-${PYTHON_VERSION}
+rm -rf "Python-${PYTHON_VERSION}"
