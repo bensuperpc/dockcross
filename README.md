@@ -78,10 +78,10 @@ The dockcross script will execute the given command-line inside the container, a
 
 | Image name | Target arch | Compiler | Target OS | More info |
 |:-------:|:--------:|:------:|:-----:|:-----:|
-| dockcross/base | - | - | - | [dockcross/base](dockcross/base) |
-| dockcross/android-arm | ARMv7 | Clang | Android 32 bit | [dockcross/android-arm](dockcross/android-arm) |
-| dockcross/android-arm64 | ARMv8 | Clang | Android | [dockcross/android-arm64](dockcross/android-arm64) |
-| dockcross/android-x86 | x86 | Clang | Android x86 | [dockcross/android-x86](dockcross/android-x86) |
+| dockcross/base | - | - | - | [`dockcross/base`](#dockcross/base) |
+| dockcross/android-arm | ARMv7 | Clang | Android 32 bit | [`dockcross/android-arm`](#dockcross/android-arm) |
+| dockcross/android-arm64 | ARMv8 | Clang | Android | [`dockcross/android-arm64`](#dockcross/android-arm64) |
+| dockcross/android-x86 | x86 | Clang | Android x86 | [`dockcross/android-x86`](#dockcross/android-x86) |
 | dockcross/android-x86_64 | x86_64 | Clang | Android x86_64 |
 | dockcross/linux-arm64 | ARMv8 | GCC | Linux ARMv8 |
 | dockcross/linux-arm64-musl | ARMv8 | GCC + musl | Linux ARMv8 |
