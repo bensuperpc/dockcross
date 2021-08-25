@@ -117,7 +117,7 @@ jobs:
       - name: basic test
         run: make ${{ matrix.arch_name.image }}.test
       - name: stockfish build test
-        if: ${{ matrix.arch_name.stockfish == "yes" }}
+        if: ${{ matrix.arch_name.stockfish == 'yes' }}
         run: |
             git clone https://github.com/official-stockfish/Stockfish.git
             cd Stockfish
