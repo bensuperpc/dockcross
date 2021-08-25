@@ -123,8 +123,8 @@ jobs:
             cd Stockfish
             git checkout sf_14
             cd src
-            ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image } net
-            ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image } build ${{ matrix.arch_name.stockfish_arg }} -j2
+            ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} net
+            ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} build ${{ matrix.arch_name.stockfish_arg }} -j2
       - name: deploy
         if: github.ref == 'refs/heads/master'
         run: |
