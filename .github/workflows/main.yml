@@ -48,63 +48,62 @@ jobs:
       matrix:
         arch_name:
         # Android images
-          - { image: "android-arm", arch: "arm" }
-          - { image: "android-arm64", arch: "arm64" }
-          - { image: "android-x86", arch: "x86" }
-          - { image: "android-x86_64", arch: "x86_64" }
+          - { image: "android-arm", stockfish: "yes", stockfish_arg: "ARCH=armv7 COMP=ndk" }
+          - { image: "android-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=ndk" }
+          - { image: "android-x86", stockfish: "no" }
+          - { image: "android-x86_64", stockfish: "yes", stockfish_arg: "ARCH=x86-64 COMP=ndk" }
         # Linux arm64/armv8 images
-          - { image: "linux-arm64", arch: "arm64" }
-          - { image: "linux-arm64-musl", arch: "arm64" }
-          - { image: "linux-arm64-full", arch: "arm64" }
+          - { image: "linux-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
+          - { image: "linux-arm64-musl", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
+          - { image: "linux-arm64-full", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
         # Linux armv5 images
-          - { image: "linux-armv5", arch: "armv5" }
-          - { image: "linux-armv5-musl", arch: "armv5" }
+          - { image: "linux-armv5", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
+          - { image: "linux-armv5-musl", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
         # Linux armv6 images
-          - { image: "linux-armv6", arch: "armv6" }
-          - { image: "linux-armv6-lts", arch: "armv6" }
-          - { image: "linux-armv6-musl", arch: "armv6" }
+          - { image: "linux-armv6", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
+          - { image: "linux-armv6-lts", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
+          - { image: "linux-armv6-musl", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
         # Linux armv7 images
-          - { image: "linux-armv7", arch: "armv7" }
-          - { image: "linux-armv7a", arch: "armv7" }
-          - { image: "linux-armv7l-musl", arch: "armv7" }
+          - { image: "linux-armv7", stockfish: "yes", stockfish_arg: "ARCH=armv7" }
+          - { image: "linux-armv7a", stockfish: "yes", stockfish_arg: "ARCH=armv7-neon" }
+          - { image: "linux-armv7l-musl", stockfish: "yes", stockfish_arg: "ARCH=armv7" }
         # Linux x86 images
-          - { image: "linux-x86", arch: "x86" }
+          - { image: "linux-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
         # Linux x86_64 images
-          - { image: "linux-x64", arch: "x86_64" }
-          - { image: "linux-x64-tinycc", arch: "x86_64" }
-          - { image: "linux-x64-clang", arch: "x86_64" }
-          - { image: "linux-x86_64-full", arch: "x86_64" }
+          - { image: "linux-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "linux-x64-tinycc", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "linux-x64-clang", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "linux-x86_64-full", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
         # Linux riscv images
-          - { image: "linux-riscv32", arch: "riscv32" }
-          - { image: "linux-riscv64", arch: "riscv64" }
+          - { image: "linux-riscv32", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
+          - { image: "linux-riscv64", stockfish: "yes", stockfish_arg: "ARCH=general-64" }
         # Linux s390x images
-          - { image: "linux-s390x", arch: "s390x" }
+          - { image: "linux-s390x", stockfish: "yes", stockfish_arg: "ARCH=general-64" }
         # Linux mips images
-          - { image: "linux-mips", arch: "mips" }
+          - { image: "linux-mips", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
         # Linux ppc64le images
-          - { image: "linux-ppc64le", arch: "ppc64le" }
+          - { image: "linux-ppc64le", stockfish: "yes", stockfish_arg: "ARCH=ppc-64" }
         # Linux m68k images
-          - { image: "linux-m68k-uclibc", arch: "m68k" }
+          - { image: "linux-m68k-uclibc", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
         # Linux xtensa images
-          - { image: "linux-xtensa-uclibc", arch: "xtensa" }
+          - { image: "linux-xtensa-uclibc", stockfish: "no" }
         # Windows x86_x64 images
-          - { image: "windows-static-x64", arch: "x86_x64" }
-          - { image: "windows-static-x64-posix", arch: "x86_x64" }
-          - { image: "windows-static-x64", arch: "x86_x64" }
-          - { image: "windows-shared-x64", arch: "x86_x64" }
-          - { image: "windows-shared-x64-posix", arch: "x64" }
+          - { image: "windows-static-x64", stockfish: "no" }
+          - { image: "windows-static-x64-posix", stockfish: "no" }
+          - { image: "windows-shared-x64", stockfish: "no" }
+          - { image: "windows-shared-x64-posix", stockfish: "no" }
         # Windows x86 images
-          - { image: "windows-static-x86", arch: "x86" }
-          - { image: "windows-shared-x86", arch: "x86" }
+          - { image: "windows-static-x86", stockfish: "no" }
+          - { image: "windows-shared-x86", stockfish: "no" }
         # Windows arm images
-          - { image: "windows-armv7", arch: "armv7" }
-          - { image: "windows-arm64", arch: "arm64" }
+          - { image: "windows-armv7", stockfish: "no" }
+          - { image: "windows-arm64", stockfish: "no" }
         # manylinux2014 images
-          - { image: "manylinux2014-x86", arch: "x86" }
-          - { image: "manylinux2014-x64", arch: "x86_64" }
-          - { image: "manylinux2014-aarch64", arch: "arm64" }
+          - { image: "manylinux2014-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
+          - { image: "manylinux2014-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "manylinux2014-aarch64", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
         # web-wasm images
-          - { image: "web-wasm", arch: "JS" }
+          - { image: "web-wasm", stockfish: "no" }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
@@ -117,6 +116,15 @@ jobs:
         run: make ${{ matrix.arch_name.image }}
       - name: basic test
         run: make ${{ matrix.arch_name.image }}.test
+        if: ${{ matrix.arch_name.stockfish }} == 'yes'
+      - name: stockfish build test
+        run: |
+            git clone https://github.com/official-stockfish/Stockfish.git
+            cd Stockfish
+            git checkout sf_14
+            cd src
+            ./../tools/dockcross-make-builder.sh net
+            ./../tools/dockcross-make-builder.sh build ${{ matrix.arch_name.stockfish_arg }} -j2
       - name: deploy
         if: github.ref == 'refs/heads/master'
         run: |
