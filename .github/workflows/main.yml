@@ -50,19 +50,19 @@ jobs:
         # Android images
           - { image: "android-arm", stockfish: "yes", stockfish_arg: "ARCH=armv7 COMP=ndk" }
           - { image: "android-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=ndk" }
-          - { image: "android-x86", stockfish: "no" }
+          - { image: "android-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32 COMP=ndk" }
           - { image: "android-x86_64", stockfish: "yes", stockfish_arg: "ARCH=x86-64 COMP=ndk" }
         # Linux arm64/armv8 images
           - { image: "linux-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
           - { image: "linux-arm64-musl", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
           - { image: "linux-arm64-full", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
         # Linux armv5 images
-          - { image: "linux-armv5", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
-          - { image: "linux-armv5-musl", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
+          - { image: "linux-armv5", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv5-musl", stockfish: "no", stockfish_arg: "" }
         # Linux armv6 images
-          - { image: "linux-armv6", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
-          - { image: "linux-armv6-lts", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
-          - { image: "linux-armv6-musl", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
+          - { image: "linux-armv6", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv6-lts", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv6-musl", stockfish: "no", stockfish_arg: "" }
         # Linux armv7 images
           - { image: "linux-armv7", stockfish: "yes", stockfish_arg: "ARCH=armv7" }
           - { image: "linux-armv7a", stockfish: "yes", stockfish_arg: "ARCH=armv7-neon" }
@@ -86,24 +86,24 @@ jobs:
         # Linux m68k images
           - { image: "linux-m68k-uclibc", stockfish: "yes", stockfish_arg: "ARCH=general-32" }
         # Linux xtensa images
-          - { image: "linux-xtensa-uclibc", stockfish: "no" }
+          - { image: "linux-xtensa-uclibc", stockfish: "no", stockfish_arg: "" }
         # Windows x86_x64 images
-          - { image: "windows-static-x64", stockfish: "no" }
-          - { image: "windows-static-x64-posix", stockfish: "no" }
-          - { image: "windows-shared-x64", stockfish: "no" }
-          - { image: "windows-shared-x64-posix", stockfish: "no" }
+          - { image: "windows-static-x64", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-static-x64-posix", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-shared-x64", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-shared-x64-posix", stockfish: "no", stockfish_arg: "" }
         # Windows x86 images
-          - { image: "windows-static-x86", stockfish: "no" }
-          - { image: "windows-shared-x86", stockfish: "no" }
+          - { image: "windows-static-x86", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-shared-x86", stockfish: "no", stockfish_arg: "" }
         # Windows arm images
-          - { image: "windows-armv7", stockfish: "no" }
-          - { image: "windows-arm64", stockfish: "no" }
+          - { image: "windows-armv7", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-arm64", stockfish: "no", stockfish_arg: "" }
         # manylinux2014 images
           - { image: "manylinux2014-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
           - { image: "manylinux2014-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
           - { image: "manylinux2014-aarch64", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
         # web-wasm images
-          - { image: "web-wasm", stockfish: "no" }
+          - { image: "web-wasm", stockfish: "no", stockfish_arg: "" }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
@@ -116,8 +116,8 @@ jobs:
         run: make ${{ matrix.arch_name.image }}
       - name: basic test
         run: make ${{ matrix.arch_name.image }}.test
-        if: ${{ matrix.arch_name.stockfish }} == 'yes'
       - name: stockfish build test
+        if: ${{ matrix.arch_name.stockfish }} == "yes"
         run: |
             git clone https://github.com/official-stockfish/Stockfish.git
             cd Stockfish
