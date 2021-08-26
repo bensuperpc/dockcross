@@ -323,7 +323,7 @@ jobs:
           git clone https://github.com/openssl/openssl.git
           cd openssl
           git checkout openssl-3.0.0-beta2
-          ./../tools/dockcross-command.sh ./Configure ${{ matrix.arch_name.openssl_arg }}
+          ./../tools/dockcross-command.sh ${{ matrix.arch_name.image }} ./Configure ${{ matrix.arch_name.openssl_arg }}
           ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -j2
       - name: deploy
         if: github.ref == 'refs/heads/master'
