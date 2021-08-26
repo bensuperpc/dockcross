@@ -15,7 +15,7 @@ if (( $# >= 2 )); then
     chmod +x ./dockcross-"$image"
     
     echo "Run command in dockcross-$image"
-    ./dockcross-"$image" "$command"
+    ./dockcross-"$image" $command
 else
     echo "Usage: ${0##*/} <docker imag (ex: linux-x64/linux-x64-clang/linux-arm64/windows-shared-x64/windows-static-x64...)> <command>"
     exit 1
