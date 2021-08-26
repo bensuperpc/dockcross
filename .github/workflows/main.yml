@@ -26,6 +26,8 @@ jobs:
               image: "android-arm",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7 COMP=ndk",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "android-arm",
             }
@@ -33,6 +35,8 @@ jobs:
               image: "android-arm64",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8 COMP=ndk",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "android-arm64",
             }
@@ -40,6 +44,8 @@ jobs:
               image: "android-x86",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-32 COMP=ndk",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "android-x86",
             }
@@ -47,6 +53,8 @@ jobs:
               image: "android-x86_64",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64 COMP=ndk",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "android-x86_64",
             }
@@ -55,6 +63,8 @@ jobs:
               image: "linux-arm64",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-aarch64",
             }
@@ -62,6 +72,8 @@ jobs:
               image: "linux-arm64-musl",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-aarch64",
             }
@@ -69,6 +81,8 @@ jobs:
               image: "linux-arm64-full",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-aarch64",
             }
@@ -77,6 +91,8 @@ jobs:
               image: "linux-armv5",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -84,6 +100,8 @@ jobs:
               image: "linux-armv5-musl",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -92,6 +110,8 @@ jobs:
               image: "linux-armv6",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -99,6 +119,8 @@ jobs:
               image: "linux-armv6-lts",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -106,6 +128,8 @@ jobs:
               image: "linux-armv6-musl",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -114,6 +138,8 @@ jobs:
               image: "linux-armv7",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -121,6 +147,8 @@ jobs:
               image: "linux-armv7a",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7-neon",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -128,6 +156,8 @@ jobs:
               image: "linux-armv7l-musl",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-armv4",
             }
@@ -136,6 +166,8 @@ jobs:
               image: "linux-x86",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-32-sse41-popcnt",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-x86",
             }
@@ -144,6 +176,8 @@ jobs:
               image: "linux-x64",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-x86_64",
             }
@@ -151,6 +185,8 @@ jobs:
               image: "linux-x64-tinycc",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
             }
@@ -158,6 +194,8 @@ jobs:
               image: "linux-x64-clang",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern COMP=clang",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "linux-x86_64-clang",
             }
@@ -165,6 +203,8 @@ jobs:
               image: "linux-x86_64-full",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-x86_64",
             }
@@ -173,6 +213,8 @@ jobs:
               image: "linux-riscv32",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-generic32",
             }
@@ -180,6 +222,8 @@ jobs:
               image: "linux-riscv64",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-generic64",
             }
@@ -188,6 +232,8 @@ jobs:
               image: "linux-s390x",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux64-s390x",
             }
@@ -196,6 +242,8 @@ jobs:
               image: "linux-mips",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-generic32",
             }
@@ -204,6 +252,8 @@ jobs:
               image: "linux-ppc64le",
               stockfish: "yes",
               stockfish_arg: "ARCH=ppc-64",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-ppc64le",
             }
@@ -212,6 +262,8 @@ jobs:
               image: "linux-m68k-uclibc",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "linux-generic32 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
             }
@@ -220,6 +272,8 @@ jobs:
               image: "linux-xtensa-uclibc",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
             }
@@ -228,6 +282,8 @@ jobs:
               image: "windows-static-x64",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern COMP=mingw",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw64 no-asm",
             }
@@ -235,6 +291,8 @@ jobs:
               image: "windows-static-x64-posix",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern COMP=mingw",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw64 no-asm",
             }
@@ -242,6 +300,8 @@ jobs:
               image: "windows-shared-x64",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw64 no-asm",
             }
@@ -249,6 +309,8 @@ jobs:
               image: "windows-shared-x64-posix",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw64 no-asm",
             }
@@ -257,6 +319,8 @@ jobs:
               image: "windows-static-x86",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-32-sse41-popcnt COMP=mingw",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw no-asm",
             }
@@ -264,6 +328,8 @@ jobs:
               image: "windows-shared-x86",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw no-asm",
             }
@@ -272,6 +338,8 @@ jobs:
               image: "windows-armv7",
               stockfish: "no",
               stockfish_arg: "ARCH=armv7-neon COMP=clang",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw no-asm",
             }
@@ -279,6 +347,8 @@ jobs:
               image: "windows-arm64",
               stockfish: "no",
               stockfish_arg: "ARCH=armv8 COMP=clang",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "mingw64 no-asm",
             }
@@ -287,6 +357,8 @@ jobs:
               image: "manylinux2014-x86",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-32-sse41-popcnt",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-x86",
             }
@@ -294,6 +366,8 @@ jobs:
               image: "manylinux2014-x64",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-x86_64",
             }
@@ -301,6 +375,8 @@ jobs:
               image: "manylinux2014-aarch64",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "yes",
               openssl_arg: "linux-aarch64",
             }
@@ -309,6 +385,8 @@ jobs:
               image: "web-wasm",
               stockfish: "no",
               stockfish_arg: "",
+              ninja: "yes",
+              ninja_arg: "",
               openssl: "no",
               openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
             }
@@ -328,7 +406,7 @@ jobs:
         run: |
           git clone --depth 1 --branch v1.10.2 https://github.com/ninja-build/ninja.git
           cd ninja
-          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }}
+          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }} ${{ matrix.arch_name.ninja_arg }}
       - name: openssl build test
         if: ${{ matrix.arch_name.openssl == 'yes' }}
         run: |
