@@ -48,62 +48,101 @@ jobs:
       matrix:
         arch_name:
         # Android images
-          - { image: "android-arm", stockfish: "yes", stockfish_arg: "ARCH=armv7 COMP=ndk" }
-          - { image: "android-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=ndk" }
-          - { image: "android-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32 COMP=ndk" }
-          - { image: "android-x86_64", stockfish: "yes", stockfish_arg: "ARCH=x86-64 COMP=ndk" }
+          - { image: "android-arm", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv7 COMP=ndk" }
+          - { image: "android-arm64", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=ndk" }
+          - { image: "android-x86", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-32 COMP=ndk" }
+          - { image: "android-x86_64", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64 COMP=ndk" }
         # Linux arm64/armv8 images
-          - { image: "linux-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
-          - { image: "linux-arm64-musl", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
-          - { image: "linux-arm64-full", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
+          - { image: "linux-arm64", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv8" }
+          - { image: "linux-arm64-musl", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv8" }
+          - { image: "linux-arm64-full", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv8" }
         # Linux armv5 images
-          - { image: "linux-armv5", stockfish: "no", stockfish_arg: "" }
-          - { image: "linux-armv5-musl", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv5", 
+            stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv5-musl", 
+            stockfish: "no", stockfish_arg: "" }
         # Linux armv6 images
-          - { image: "linux-armv6", stockfish: "no", stockfish_arg: "" }
-          - { image: "linux-armv6-lts", stockfish: "no", stockfish_arg: "" }
-          - { image: "linux-armv6-musl", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv6", 
+            stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv6-lts", 
+            stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-armv6-musl", 
+            stockfish: "no", stockfish_arg: "" }
         # Linux armv7 images
-          - { image: "linux-armv7", stockfish: "yes", stockfish_arg: "ARCH=armv7" }
-          - { image: "linux-armv7a", stockfish: "yes", stockfish_arg: "ARCH=armv7-neon" }
-          - { image: "linux-armv7l-musl", stockfish: "yes", stockfish_arg: "ARCH=armv7" }
+          - { image: "linux-armv7", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv7" }
+          - { image: "linux-armv7a", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv7-neon" }
+          - { image: "linux-armv7l-musl", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv7" }
         # Linux x86 images
-          - { image: "linux-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
+          - { image: "linux-x86", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
         # Linux x86_64 images
-          - { image: "linux-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
-          - { image: "linux-x64-tinycc", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
-          - { image: "linux-x64-clang", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=clang" }
-          - { image: "linux-x86_64-full", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "linux-x64", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "linux-x64-tinycc", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "linux-x64-clang", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=clang" }
+          - { image: "linux-x86_64-full", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
         # Linux riscv images
-          - { image: "linux-riscv32", stockfish: "no", stockfish_arg: "" }
-          - { image: "linux-riscv64", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-riscv32", 
+            stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-riscv64", 
+            stockfish: "no", stockfish_arg: "" }
         # Linux s390x images
-          - { image: "linux-s390x", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-s390x",   
+          stockfish: "no", stockfish_arg: "" }
         # Linux mips images
-          - { image: "linux-mips", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-mips", 
+            stockfish: "no", stockfish_arg: "" }
         # Linux ppc64le images
-          - { image: "linux-ppc64le", stockfish: "yes", stockfish_arg: "ARCH=ppc-64" }
+          - { image: "linux-ppc64le", 
+            stockfish: "yes", stockfish_arg: "ARCH=ppc-64" }
         # Linux m68k images
-          - { image: "linux-m68k-uclibc", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-m68k-uclibc", 
+            stockfish: "no", stockfish_arg: "" }
         # Linux xtensa images
-          - { image: "linux-xtensa-uclibc", stockfish: "no", stockfish_arg: "" }
+          - { image: "linux-xtensa-uclibc", 
+            stockfish: "no", stockfish_arg: "" }
         # Windows x86_x64 images
-          - { image: "windows-static-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
-          - { image: "windows-static-x64-posix", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
-          - { image: "windows-shared-x64", stockfish: "no", stockfish_arg: "" }
-          - { image: "windows-shared-x64-posix", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-static-x64", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
+          - { image: "windows-static-x64-posix", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
+          - { image: "windows-shared-x64", 
+            stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-shared-x64-posix", 
+            stockfish: "no", stockfish_arg: "" }
         # Windows x86 images
-          - { image: "windows-static-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt COMP=mingw" }
-          - { image: "windows-shared-x86", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-static-x86", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt COMP=mingw" }
+          - { image: "windows-shared-x86", 
+            stockfish: "no", stockfish_arg: "" }
         # Windows arm images
-          - { image: "windows-armv7", stockfish: "yes", stockfish_arg: "ARCH=armv7-neon COMP=clang" }
-          - { image: "windows-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=clang" }
+          - { image: "windows-armv7", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv7-neon COMP=clang" }
+          - { image: "windows-arm64", 
+            stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=clang" }
         # manylinux2014 images
-          - { image: "manylinux2014-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
-          - { image: "manylinux2014-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
-          - { image: "manylinux2014-aarch64", stockfish: "no", stockfish_arg: "" }
+          - { image: "manylinux2014-x86", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
+          - { image: "manylinux2014-x64", 
+            stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
+          - { image: "manylinux2014-aarch64", 
+            stockfish: "no", stockfish_arg: "" }
         # web-wasm images
-          - { image: "web-wasm", stockfish: "no", stockfish_arg: "" }
+          - { image: "web-wasm", 
+            stockfish: "no", stockfish_arg: "" }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
