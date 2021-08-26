@@ -90,20 +90,20 @@ jobs:
         # Windows x86_x64 images
           - { image: "windows-static-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
           - { image: "windows-static-x64-posix", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
-          - { image: "windows-shared-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
-          - { image: "windows-shared-x64-posix", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern COMP=mingw" }
+          - { image: "windows-shared-x64", stockfish: "no", stockfish_arg: "" }
+          - { image: "windows-shared-x64-posix", stockfish: "no", stockfish_arg: "" }
         # Windows x86 images
           - { image: "windows-static-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt COMP=mingw" }
-          - { image: "windows-shared-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt COMP=mingw" }
+          - { image: "windows-shared-x86", stockfish: "no", stockfish_arg: "" }
         # Windows arm images
-          - { image: "windows-armv7", stockfish: "yes", stockfish_arg: "ARCH=armv7-neon COMP=mingw" }
-          - { image: "windows-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=mingw" }
+          - { image: "windows-armv7", stockfish: "yes", stockfish_arg: "ARCH=armv7-neon COMP=clang" }
+          - { image: "windows-arm64", stockfish: "yes", stockfish_arg: "ARCH=armv8 COMP=clang" }
         # manylinux2014 images
           - { image: "manylinux2014-x86", stockfish: "yes", stockfish_arg: "ARCH=x86-32-sse41-popcnt" }
           - { image: "manylinux2014-x64", stockfish: "yes", stockfish_arg: "ARCH=x86-64-modern" }
-          - { image: "manylinux2014-aarch64", stockfish: "yes", stockfish_arg: "ARCH=armv8" }
+          - { image: "manylinux2014-aarch64", stockfish: "no", stockfish_arg: "" }
         # web-wasm images
-          - { image: "web-wasm", stockfish: "yes", stockfish_arg: "ARCH=general-64" }
+          - { image: "web-wasm", stockfish: "no", stockfish_arg: "" }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
