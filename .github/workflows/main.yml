@@ -353,6 +353,12 @@ jobs:
           cd src
           ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} net
           ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} build ${{ matrix.arch_name.stockfish_arg }} -j2
+      - name: openssl build test
+        if: ${{ matrix.arch_name.openssl == 'yes' }}
+        run: |
+          git clone https://github.com/openssl/openssl.git
+          cd openssl
+          git checkout openssl-3.0.0-beta2
       - name: deploy
         if: github.ref == 'refs/heads/master'
         run: |
