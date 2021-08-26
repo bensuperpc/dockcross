@@ -119,21 +119,21 @@ jobs:
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv6",
             }
           - {
               image: "linux-armv6-lts",
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv6",
             }
           - {
               image: "linux-armv6-musl",
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv6",
             }
           # Linux armv7 images
           - {
@@ -171,28 +171,28 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-x86_64",
             }
           - {
               image: "linux-x64-tinycc",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-x86_64",
             }
           - {
               image: "linux-x64-clang",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern COMP=clang",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-x86_64",
             }
           - {
               image: "linux-x86_64-full",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-x86_64",
             }
           # Linux riscv images
           - {
