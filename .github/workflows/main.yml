@@ -315,7 +315,7 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-x86_64",
             }
           - {
               image: "manylinux2014-aarch64",
@@ -360,7 +360,7 @@ jobs:
           cd openssl
           git checkout openssl-3.0.0-beta2
           ./Configure ${{ matrix.arch_name.openssl_arg }}
-          ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }}
+          ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -j2
       - name: deploy
         if: github.ref == 'refs/heads/master'
         run: |
