@@ -21,7 +21,6 @@ ENV AS=${CROSS_ROOT}/bin/llvm-as \
 
 ENV ANDROID_NDK_REVISION 23
 ENV ANDROID_NDK_API 23
-ENV ANDROID_NDK_HOME ${CROSS_ROOT}
 
 RUN mkdir -p /build && \
     cd /build && \
