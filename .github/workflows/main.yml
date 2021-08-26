@@ -82,21 +82,21 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-aarch64",
             }
           - {
               image: "linux-arm64-musl",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-aarch64",
             }
           - {
               image: "linux-arm64-full",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-aarch64",
             }
           # Linux armv5 images
           - {
@@ -104,14 +104,14 @@ jobs:
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv4",
             }
           - {
               image: "linux-armv5-musl",
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv4",
             }
           # Linux armv6 images
           - {
@@ -141,21 +141,21 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv7",
             }
           - {
               image: "linux-armv7a",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7-neon",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv7",
             }
           - {
               image: "linux-armv7l-musl",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "linux-armv7",
             }
           # Linux x86 images
           - {
@@ -359,6 +359,8 @@ jobs:
           git clone https://github.com/openssl/openssl.git
           cd openssl
           git checkout openssl-3.0.0-beta2
+          ./Configure ${{ matrix.arch_name.openssl_arg }}
+          ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }}
       - name: deploy
         if: github.ref == 'refs/heads/master'
         run: |
