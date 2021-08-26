@@ -322,6 +322,13 @@ jobs:
           ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} net
           ./../../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} build ${{ matrix.arch_name.stockfish_arg }} -j2
           cd ../..
+          rm -rf Stockfish
+      - name: ninja build test
+        if: ${{ matrix.arch_name.ninja == 'yes' }}
+        run: |
+          git clone --depth 1 --branch v1.10.2 https://github.com/ninja-build/ninja.git
+          cd ninja
+          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }}
       - name: openssl build test
         if: ${{ matrix.arch_name.openssl == 'yes' }}
         run: |
@@ -329,6 +336,8 @@ jobs:
           cd openssl
           ./../tools/dockcross-command.sh ${{ matrix.arch_name.image }} ./Configure ${{ matrix.arch_name.openssl_arg }}
           ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -j2
+          cd ..
+          rm -rf openssl
       - name: deploy
         if: github.ref == 'refs/heads/master'
         run: |
