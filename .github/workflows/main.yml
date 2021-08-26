@@ -27,28 +27,28 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7 COMP=ndk",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "android-arm",
             }
           - {
               image: "android-arm64",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv8 COMP=ndk",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "android-arm64",
             }
           - {
               image: "android-x86",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-32 COMP=ndk",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "android-x86",
             }
           - {
               image: "android-x86_64",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64 COMP=ndk",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "android-x86_64",
             }
           # Linux arm64/armv8 images
           - {
@@ -93,21 +93,21 @@ jobs:
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "linux-armv6",
+              openssl_arg: "linux-armv4",
             }
           - {
               image: "linux-armv6-lts",
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "linux-armv6",
+              openssl_arg: "linux-armv4",
             }
           - {
               image: "linux-armv6-musl",
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "linux-armv6",
+              openssl_arg: "linux-armv4",
             }
           # Linux armv7 images
           - {
@@ -115,21 +115,21 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7",
               openssl: "yes",
-              openssl_arg: "linux-armv7",
+              openssl_arg: "linux-armv4",
             }
           - {
               image: "linux-armv7a",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7-neon",
               openssl: "yes",
-              openssl_arg: "linux-armv7",
+              openssl_arg: "linux-armv4",
             }
           - {
               image: "linux-armv7l-musl",
               stockfish: "yes",
               stockfish_arg: "ARCH=armv7",
               openssl: "yes",
-              openssl_arg: "linux-armv7",
+              openssl_arg: "linux-armv4",
             }
           # Linux x86 images
           - {
@@ -323,7 +323,7 @@ jobs:
           git clone https://github.com/openssl/openssl.git
           cd openssl
           git checkout openssl-3.0.0-beta2
-          ./Configure ${{ matrix.arch_name.openssl_arg }}
+          ./../tools/dockcross-command.sh ./Configure ${{ matrix.arch_name.openssl_arg }}
           ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -j2
       - name: deploy
         if: github.ref == 'refs/heads/master'
