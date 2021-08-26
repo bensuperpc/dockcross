@@ -152,14 +152,14 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern",
               openssl: "yes",
-              openssl_arg: "linux-generic64",
+              openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
             }
           - {
               image: "linux-x64-clang",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern COMP=clang",
               openssl: "yes",
-              openssl_arg: "linux-x86-clang",
+              openssl_arg: "linux-x86_64-clang",
             }
           - {
               image: "linux-x86_64-full",
@@ -197,7 +197,7 @@ jobs:
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "linux64-mips64",
+              openssl_arg: "linux-generic32",
             }
           # Linux ppc64le images
           - {
@@ -213,7 +213,7 @@ jobs:
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "linux-generic32",
+              openssl_arg: "linux-generic32 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
             }
           # Linux xtensa images
           - {
@@ -221,7 +221,7 @@ jobs:
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "linux-generic64",
+              openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
             }
           # Windows x86_x64 images
           - {
@@ -229,28 +229,28 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern COMP=mingw",
               openssl: "yes",
-              openssl_arg: "mingw64",
+              openssl_arg: "mingw64 no-asm",
             }
           - {
               image: "windows-static-x64-posix",
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-64-modern COMP=mingw",
               openssl: "yes",
-              openssl_arg: "mingw64",
+              openssl_arg: "mingw64 no-asm",
             }
           - {
               image: "windows-shared-x64",
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "mingw64",
+              openssl_arg: "mingw64 no-asm",
             }
           - {
               image: "windows-shared-x64-posix",
               stockfish: "no",
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "mingw64",
+              openssl_arg: "mingw64 no-asm",
             }
           # Windows x86 images
           - {
@@ -258,14 +258,14 @@ jobs:
               stockfish: "yes",
               stockfish_arg: "ARCH=x86-32-sse41-popcnt COMP=mingw",
               openssl: "yes",
-              openssl_arg: "",
+              openssl_arg: "mingw no-asm",
             }
           - {
               image: "windows-shared-x86", 
               stockfish: "no", 
               stockfish_arg: "",
               openssl: "yes",
-              openssl_arg: "mingw",
+              openssl_arg: "mingw no-asm",
           }
           # Windows arm images
           - {
@@ -273,14 +273,14 @@ jobs:
               stockfish: "no",
               stockfish_arg: "ARCH=armv7-neon COMP=clang",
               openssl: "yes",
-              openssl_arg: "mingw",
+              openssl_arg: "mingw no-asm",
             }
           - {
               image: "windows-arm64",
               stockfish: "no",
               stockfish_arg: "ARCH=armv8 COMP=clang",
               openssl: "yes",
-              openssl_arg: "mingw64",
+              openssl_arg: "mingw64 no-asm",
             }
           # manylinux2014 images
           - {
