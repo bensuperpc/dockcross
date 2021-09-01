@@ -1,4 +1,4 @@
-name: Dockcross CI
+name: Dockcross CI (Main)
 
 on:
   push:

@@ -1,0 +1,120 @@
+name: Dockcross CI (Windows)
+# Only to test and build some docker images on Windows
+
+on:
+  push:
+    branches:
+    - '*'
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+    - '*'
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+  base:
+    name: base
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build
+        run: make base
+      - name: test
+        run: make base.test
+      - name: archive base
+        run: |
+            mkdir -p cache
+            docker save dockcross/base:latest | xz -e9 -T0 > ./cache/base-windows.tar.xz
+      - name: save base
+        uses: actions/upload-artifact@v2
+        with:
+          name: cache
+          path: ./cache
+          retention-days: 1
+      - name: deploy
+        if: github.ref == 'refs/heads/master'
+        run: |
+            docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+            docker image push dockcross/base --all-tags
+
+  image:
+    name: ${{ matrix.arch_name.image }}
+    needs: base
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch_name:
+        # Android images
+#          - { image: "android-arm" }
+          - { image: "android-arm64" }
+#          - { image: "android-x86" }
+#          - { image: "android-x86_64" }
+        # Linux arm64/armv8 images
+          - { image: "linux-arm64" }
+          - { image: "linux-arm64-musl" }
+          - { image: "linux-arm64-full" }
+        # Linux armv5 images
+#          - { image: "linux-armv5" }
+#          - { image: "linux-armv5-musl" }
+        # Linux armv6 images
+#          - { image: "linux-armv6" }
+#          - { image: "linux-armv6-lts" }
+#          - { image: "linux-armv6-musl" }
+        # Linux armv7 images
+#          - { image: "linux-armv7" }
+#          - { image: "linux-armv7a" }
+#          - { image: "linux-armv7l-musl" }
+        # Linux x86 images
+          - { image: "linux-x86" }
+        # Linux x86_64 images
+          - { image: "linux-x64" }
+          - { image: "linux-x64-tinycc" }
+          - { image: "linux-x64-clang" }
+#          - { image: "linux-x86_64-full" }
+        # Linux riscv images
+#          - { image: "linux-riscv32" }
+#          - { image: "linux-riscv64" }
+        # Linux s390x images
+#          - { image: "linux-s390x" }
+        # Linux mips images
+#          - { image: "linux-mips" }
+        # Linux ppc64le images
+#          - { image: "linux-ppc64le" }
+        # Linux m68k images
+#          - { image: "linux-m68k-uclibc" }
+        # Linux xtensa images
+#          - { image: "linux-xtensa-uclibc" }
+        # Windows x86_x64 images
+          - { image: "windows-static-x64" }
+#          - { image: "windows-static-x64-posix" }
+          - { image: "windows-static-x64" }
+#          - { image: "windows-shared-x64" }
+          - { image: "windows-shared-x64-posix" }
+        # Windows x86 images
+#          - { image: "windows-static-x86" }
+#          - { image: "windows-shared-x86" }
+        # Windows arm images
+#          - { image: "windows-armv7" }
+          - { image: "windows-arm64" }
+        # manylinux2014 images
+#          - { image: "manylinux2014-x86" }
+          - { image: "manylinux2014-x64" }
+#          - { image: "manylinux2014-aarch64" }
+        # web-wasm images
+          - { image: "web-wasm" }
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: cache
+          path: ./cache
+      - name: load base
+        run: xz -d -k < ./cache/base-windows.tar.xz | docker load
+      - name: build
+        run: make ${{ matrix.arch_name.image }}
+      - name: basic test
+        run: make ${{ matrix.arch_name.image }}.test
