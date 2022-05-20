@@ -898,3 +898,4 @@ jobs:
         run: |
           docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
           docker image push dockcross/${{ matrix.arch_name.image }} --all-tags
+
