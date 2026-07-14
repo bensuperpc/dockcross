@@ -198,39 +198,51 @@ Once this part is finished, there must be 3 files in the `linux-arm64` folder:
 
 ### Makefile
 
-For this last part, we will see how to add the image to the [Makefile](Makefile) and to a github action.
+The [Makefile](Makefile) is generic: it knows how to generate/build/test/push
+an image out of a "preset" directory, but it has no built-in knowledge of the
+actual list of dockcross images. Every image folder is a preset that is
+auto-discovered because it contains a `preset.mk` file - there is no central
+list to edit anymore.
 
-You need to add the image/folder name (**linux-arm64**) to the **STANDARD_IMAGES** variable in the [Makefile](Makefile):
-
-```make
-# These images are built using the "build implicit rule"
-STANDARD_IMAGES = android-arm android-arm64 android-x86 android-x86_64 \
- linux-x86 linux-x64 linux-x64-clang linux-arm64 linux-arm64-musl linux-arm64-full \
- linux-armv5 linux-armv5-musl linux-armv5-uclibc linux-m68k-uclibc linux-s390x linux-x64-tinycc \
- linux-armv6 linux-armv6-lts linux-armv6-musl linux-arm64-lts \
- linux-armv7l-musl linux-armv7 linux-armv7a linux-armv7-lts linux-x86_64-full \
- linux-mips linux-ppc64le linux-riscv64 linux-riscv32 linux-xtensa-uclibc \
- web-wasi \
- windows-static-x86 windows-static-x64 windows-static-x64-posix windows-armv7 \
- windows-shared-x86 windows-shared-x64 windows-shared-x64-posix windows-arm64
-```
-
-You need to add the image/folder name (`linux-arm64`) to the `GEN_IMAGES` variable in the [Makefile](Makefile):
+To add the image to the build system, create **`linux-arm64/preset.mk`**:
 
 ```make
-# Generated Dockerfiles.
-GEN_IMAGES = android-arm android-arm64 \
- linux-x86 linux-x64 linux-x64-clang linux-arm64 linux-arm64-musl linux-arm64-full \
- manylinux2014-x64 manylinux2014-x86 \
- manylinux2014-aarch64 linux-arm64-lts \
- web-wasm web-wasi linux-mips windows-arm64 windows-armv7 \
- windows-static-x86 windows-static-x64 windows-static-x64-posix \
- windows-shared-x86 windows-shared-x64 windows-shared-x64-posix \
- linux-armv7 linux-armv7a linux-armv7l-musl linux-armv7-lts linux-x86_64-full \
- linux-armv6 linux-armv6-lts linux-armv6-musl \
- linux-armv5 linux-armv5-musl linux-armv5-uclibc linux-ppc64le linux-s390x \
- linux-riscv64 linux-riscv32 linux-m68k-uclibc linux-x64-tinycc linux-xtensa-uclibc
+BASE_IMAGE_REGISTRY ?= docker.io
+BASE_IMAGE_PATH ?= dockcross
+BASE_IMAGE_NAME = base
+BASE_IMAGE_TAG  = latest
+
+OUTPUT_IMAGE_REGISTRY ?= docker.io
+OUTPUT_IMAGE_PATH ?= dockcross
+OUTPUT_IMAGE_NAME = linux-arm64
 ```
+
+`BASE_IMAGE_NAME = base` / `BASE_IMAGE_TAG = latest` matches the common case
+where `Dockerfile.in` starts with `ARG ORG=dockcross` / `FROM ${ORG}/base:latest`
+(the image is built on top of the local `base` preset). `OUTPUT_IMAGE_NAME`
+should match the folder name so the built image is tagged
+`<registry>/<path>/linux-arm64`.
+
+A `preset.mk` can override or add anything the generic Makefile doesn't
+already do the right thing for, for example:
+
+- `TEST_IMAGE_CMD` / `TEST_IMAGE_ARGS`: override the command run by `make
+  <image>.test` (defaults to `python3 test/run.py`). E.g. an image that only
+  supports C needs `TEST_IMAGE_ARGS = --languages C`.
+- `BUILD_CONTEXT_DIR`: override the docker build context directory. Defaults
+  to the preset's own folder; a few images (the manylinux\*-aarch64/x64/x86
+  family) `COPY` files from sibling folders and need
+  `BUILD_CONTEXT_DIR = $(PRESET_DIR)` (the repository root) instead.
+- `DEPENDS_ON`: list of `<preset>.build` targets that must be built first,
+  for images whose `Dockerfile.in` is `FROM ${ORG}/<other-image>:latest`
+  (e.g. `manylinux2014-aarch64` depends on `manylinux2014-x64`).
+- `EXTRA_BUILD_ARGS`: extra `--build-arg KEY=VALUE` flags.
+- `STATIC_DOCKERFILE = yes`: for the rare image that ships a committed
+  `Dockerfile` instead of a generated `Dockerfile.in`.
+
+See [linux-arm64/preset.mk](linux-arm64/preset.mk) and, for the more
+involved cases, [manylinux2014-aarch64/preset.mk](manylinux2014-aarch64/preset.mk)
+or [web-wasm/preset.mk](web-wasm/preset.mk).
 
 ### Image building and testing
 
@@ -268,27 +280,41 @@ With CMake + Ninja:
 
 ### CI (github action)
 
-To finish, you have to add to `.github/workflows/main.yml` the image/folder name:
+To finish, you have to add the image/folder name to the `images` job's matrix
+in `.github/workflows/main.yml`:
 
 ```yml
           # Linux arm64/armv8 images
-          - {
-              image: "linux-arm64",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv8",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-aarch64",
-              C: "yes",
-              C_arg: "",
-              C-Plus-Plus: "yes",
-              C-Plus-Plus_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-unknown-linux-gnu --target=aarch64-unknown-linux-gnu",
-            }
+          - { image: "linux-arm64", multiarch: "yes" }
 ```
 
-You can disable and enable the build of certain tests which can cause problems with certain CPU architectures (eg. OpenSSL with Risc-V...).
+`multiarch: "yes"` is only for the handful of images that are natively built
+and published for both amd64 and arm64 (see `deploy-multi-arch-images` in the
+same file); everything else should leave it empty.
+
+That's the only thing the CI workflow needs to know. It builds the image with
+`make <image>`, runs the fast in-container smoke test with `make
+<image>.test`, and then `make <image>.test-extra` - which builds a handful of
+real upstream projects (Stockfish, CMake, OpenSSL, CPython, ...) with the
+image's toolchain. Which of those extra tests apply to this image and their
+architecture-specific flags are **not** set in the workflow: they belong in
+the image's own `preset.mk`, e.g.:
+
+```make
+EXTRA_TESTS = stockfish ninja openssl SQLite fmt cpython
+STOCKFISH_ARGS = ARCH=armv8
+OPENSSL_ARGS = linux-aarch64
+CPYTHON_ARGS = --host=aarch64-unknown-linux-gnu --target=aarch64-unknown-linux-gnu
+```
+
+What each extra test actually clones and builds is defined once in the
+[Makefile](Makefile) ("Extra tests" section) so it stays identical across
+every image. You can run any of them locally, the same way CI does:
+
+```bash
+make linux-arm64.test-extra          # everything EXTRA_TESTS lists
+make linux-arm64.test-stockfish      # one test directly, regardless of EXTRA_TESTS
+```
+
+Leave `EXTRA_TESTS` unset for images where a given upstream project doesn't
+build (e.g. OpenSSL on some RISC-V targets).

@@ -9,7 +9,11 @@ ENV WASI_VERSION=27
 ENV WASI_VERSION_FULL=${WASI_VERSION}.0
 
 ENV WASMTIME_HOME=/wasi-runtimes/wasmtime
-RUN mkdir -p ${WASMTIME_HOME} && curl https://wasmtime.dev/install.sh -sSf | bash
+# Pinned below v47.0.0: that release removes wasi-threads/wasi-common support
+# entirely (see https://github.com/bytecodealliance/rfcs/pull/47), which the
+# wasi-sdk sysroot test suite below relies on for its threaded targets.
+ENV WASMTIME_VERSION=v46.0.1
+RUN mkdir -p ${WASMTIME_HOME} && curl https://wasmtime.dev/install.sh -sSf | bash -s -- --version ${WASMTIME_VERSION}
 ENV PATH="$WASMTIME_HOME/bin:$PATH"
 
 COPY download-build-install-wasi-sdk.sh /usr/local/bin/

@@ -11,6 +11,8 @@ on:
 
 env:
   OCI_EXE: docker
+  ORG: dockcross
+  BUILD_IMAGE_ARGS: --cache-from type=gha --cache-to type=gha,mode=max
 
 jobs:
   base:
@@ -32,7 +34,7 @@ jobs:
       - name: archive base
         run: |
           mkdir -p cache
-          docker save dockcross/base:latest | xz -e6 -T0 > ./cache/base.tar.xz
+          docker save ${{ env.ORG }}/base:latest | xz -e6 -T0 > ./cache/base.tar.xz
 
       - name: save base
         uses: actions/upload-artifact@v7
@@ -50,16 +52,10 @@ jobs:
 
       - name: deploy
         if: github.ref == 'refs/heads/master'
-        run: |
-            docker image push dockcross/base --all-tags
-
-  base-multiarch:
-    name: base-multiarch
-    runs-on: ${{ matrix.os }}
-    strategy:
-      max-parallel: 5
-      matrix:
-        os: [ubuntu-22.04, ubuntu-22.04-arm]
+        run: make base.push
+  base-arm64:
+    name: base-arm64
+    runs-on: ubuntu-22.04-arm
     steps:
       - name: checkout code
         uses: actions/checkout@v6
@@ -67,1312 +63,114 @@ jobs:
           submodules: "recursive"
           fetch-depth: 1
 
-      - name: set host_arch
-        run: |
-          echo "HOST_ARCH=$(uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')" >> $GITHUB_ENV
+      - name: build
+        run: make base
 
-      - name: build multiarch
-        run: |
-          make base-${{ env.HOST_ARCH }}
-
-      - name: test multiarch
-        run: |
-          mkdir -p bin
-          make base-${{ env.HOST_ARCH }}.test
+      - name: test
+        run: make base.test
 
       - name: archive base
         run: |
           mkdir -p cache
-          docker save dockcross/base:latest-${{ env.HOST_ARCH }} | xz -e6 -T0 > ./cache/base-multiarch.tar.xz
+          docker save ${{ env.ORG }}/base:latest | xz -e6 -T0 > ./cache/base.tar.xz
 
       - name: save base
         uses: actions/upload-artifact@v7
         with:
-          name: cache-${{ matrix.os }}
+          name: cache-arm64
           path: ./cache
           retention-days: 3
 
-      - name: Login to Docker Hub
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
-
-      - name: deploy
-        if: github.ref == 'refs/heads/master'
-        run: |
-            docker image push dockcross/base --all-tags
-
   images:
-    needs: [base, base-multiarch]
+    needs: [base, base-arm64]
     runs-on: ${{ matrix.os }}
-    env:
-      OCI_EXE: docker
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04, ubuntu-22.04-arm]
         arch_name:
           # Android images
-          - {
-              image: "android-arm",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv7 COMP=ndk",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "android-arm no-shared",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "--host=arm-linux-androideabi --target=arm-linux-androideabi",
-            }
-          - {
-              image: "android-arm64",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv8 COMP=ndk",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "android-arm64 no-shared",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "--host=aarch64-linux-android --target=aarch64-linux-android",
-            }
-          - {
-              image: "android-x86",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-32 COMP=ndk",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "android-x86 no-shared",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "--host=i686-linux-android --target=i686-linux-android",
-            }
-          - {
-              image: "android-x86_64",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64 COMP=ndk",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "android-x86_64 no-shared",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "--host=x86_64-linux-android --target=x86_64-linux-android",
-            }
-          # inux arm64/armv8 images
-          - {
-              image: "linux-arm64",
-              multiarch: "yes",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv8",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "linux-aarch64",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "yes",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-unknown-linux-gnu --target=aarch64-unknown-linux-gnu",
-            }
-          - {
-              image: "linux-arm64-lts",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv8",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-aarch64",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-unknown-linux-gnu --target=aarch64-unknown-linux-gnu",
-            }
-          - {
-              image: "linux-arm64-musl",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv8",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-aarch64",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-linux-musl --target=aarch64-linux-musl",
-            }
-          - {
-              image: "linux-arm64-full",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv8",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-aarch64",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-buildroot-linux-gnu --target=aarch64-buildroot-linux-gnu",
-            }
-          # Linux mipel images
-          - {
-              image: "linux-mipsel-lts",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
+          - { image: "android-arm", multiarch: "" }
+          - { image: "android-arm64", multiarch: "" }
+          - { image: "android-x86", multiarch: "" }
+          - { image: "android-x86_64", multiarch: "" }
+          # Linux arm64/armv8 images
+          - { image: "linux-arm64", multiarch: "yes" }
+          - { image: "linux-arm64-lts", multiarch: "" }
+          - { image: "linux-arm64-musl", multiarch: "" }
+          - { image: "linux-arm64-full", multiarch: "" }
+          # Linux mipsel images
+          - { image: "linux-mipsel-lts", multiarch: "" }
           # Linux armv5 images
-          - {
-              image: "linux-armv5",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv5-unknown-linux-gnueabi --target=armv5-unknown-linux-gnueabi",
-            }
-          - {
-              image: "linux-armv5-musl",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv5-unknown-linux-musleabi --target=armv5-unknown-linux-musleabi",
-            }
-          - {
-              image: "linux-armv5-uclibc",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=arm-unknown-linux-uclibcgnueabi --target=arm-unknown-linux-uclibcgnueabi",
-            }
+          - { image: "linux-armv5", multiarch: "" }
+          - { image: "linux-armv5-musl", multiarch: "" }
+          - { image: "linux-armv5-uclibc", multiarch: "" }
           # Linux armv6 images
-          - {
-              image: "linux-armv6",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv6-unknown-linux-gnueabihf --target=armv6-unknown-linux-gnueabihf",
-            }
-          - {
-              image: "linux-armv6-lts",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv6-unknown-linux-gnueabihf --target=armv6-unknown-linux-gnueabihf",
-            }
-          - {
-              image: "linux-armv6-musl",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv6-linux-musleabihf --target=armv6-linux-musleabihf",
-            }
+          - { image: "linux-armv6", multiarch: "" }
+          - { image: "linux-armv6-lts", multiarch: "" }
+          - { image: "linux-armv6-musl", multiarch: "" }
           # Linux armv7 images
-          - {
-              image: "linux-armv7",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv7",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv7-unknown-linux-gnueabi --target=armv7-unknown-linux-gnueabi",
-            }
-          - {
-              image: "linux-armv7a",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv7-neon",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=arm-cortexa8_neon-linux-gnueabihf --target=arm-cortexa8_neon-linux-gnueabihf",
-            }
-          - {
-              image: "linux-armv7a-lts",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv7-neon",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=arm-cortexa8_neon-linux-gnueabihf --target=arm-cortexa8_neon-linux-gnueabihf",
-            }
-          - {
-              image: "linux-armv7-lts",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv7",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv7-unknown-linux-gnueabi --target=armv7-unknown-linux-gnueabi",
-            }
-          - {
-              image: "linux-armv7l-musl",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=armv7",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-armv4",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=armv7l-linux-musleabihf --target=armv7l-linux-musleabihf",
-            }
+          - { image: "linux-armv7", multiarch: "" }
+          - { image: "linux-armv7a", multiarch: "" }
+          - { image: "linux-armv7a-lts", multiarch: "" }
+          - { image: "linux-armv7-lts", multiarch: "" }
+          - { image: "linux-armv7l-musl", multiarch: "" }
           # Linux x86 images
-          - {
-              image: "linux-x86",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-32-sse41-popcnt",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-x86",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "",
-            }
+          - { image: "linux-x86", multiarch: "" }
           # Linux i686 images
-          - {
-              image: "linux-i686",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic32",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=i686-linux-gnu --target=i686-linux-gnu",
-            }
+          - { image: "linux-i686", multiarch: "" }
           # Linux x86_64 images
-          - {
-              image: "linux-x64",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-x86_64",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "",
-            }
-          - {
-              image: "linux-x64-tinycc",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic64 no-tests no-asm no-hw no-dtls no-shared no-dso",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          - {
-              image: "linux-x64-clang",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern COMP=clang",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-x86_64-clang",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "",
-            }
-          - {
-              image: "linux-x86_64-full",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-x86_64",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=x86_64-buildroot-linux-gnu --target=x86_64-buildroot-linux-gnu",
-            }
+          - { image: "linux-x64", multiarch: "" }
+          - { image: "linux-x64-tinycc", multiarch: "" }
+          - { image: "linux-x64-clang", multiarch: "" }
+          - { image: "linux-x86_64-full", multiarch: "" }
           # Linux riscv images
-          - {
-              image: "linux-riscv32",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic32",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=riscv32-unknown-linux-gnu --target=riscv32-unknown-linux-gnu",
-            }
-          - {
-              image: "linux-riscv64",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic64",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=riscv64-unknown-linux-gnu --target=riscv64-unknown-linux-gnu",
-            }
+          - { image: "linux-riscv32", multiarch: "" }
+          - { image: "linux-riscv64", multiarch: "" }
           # Linux s390x images
-          - {
-              image: "linux-s390x",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux64-s390x",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=s390x-ibm-linux-gnu --target=s390x-ibm-linux-gnu",
-            }
+          - { image: "linux-s390x", multiarch: "" }
           # Linux loongarch64 images
-          - {
-              image: "linux-loongarch64",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=loongarch64",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux64-loongarch64",
-              C: "yes",
-              C_arg: "-DCMAKE_C_FLAGS=-Wno-incompatible-pointer-types",
-              C-Plus-Plus: "yes",
-              C-Plus-Plus_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=loongarch64-unknown-linux-gnu --target=loongarch64-unknown-linux-gnu",
-            }
+          - { image: "linux-loongarch64", multiarch: "" }
           # Linux mips images
-          - {
-              image: "linux-mips",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic32",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=mips-unknown-linux-gnu --target=mips-unknown-linux-gnu",
-            }
-          - {
-              image: "linux-mips-uclibc",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic32",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=mips-unknown-linux-uclibc --target=mips-unknown-linux-uclibc",
-            }
-          # Linux mips images
-          - {
-              image: "linux-mips-lts",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic32",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=mips-unknown-linux-gnu --target=mips-unknown-linux-gnu",
-            }
-            # Linux ppc images
-          - {
-              image: "linux-ppc",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-ppc",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "yes",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=powerpc-unknown-linux-gnu --target=powerpc-unknown-linux-gnu",
-            }
-          # Linux ppc64le images
-          - {
-              image: "linux-ppc64le",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=ppc-64",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-ppc64le",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "yes",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=powerpc64le-unknown-linux-gnu --target=powerpc64le-unknown-linux-gnu",
-            }
-          # Linux ppc64le-lts images
-          - {
-              image: "linux-ppc64le-lts",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=ppc-64",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-ppc64le",
-              C: "yes",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=powerpc64le-unknown-linux-gnu --target=powerpc64le-unknown-linux-gnu",
-            }
+          - { image: "linux-mips", multiarch: "" }
+          - { image: "linux-mips-uclibc", multiarch: "" }
+          - { image: "linux-mips-lts", multiarch: "" }
+          # Linux ppc images
+          - { image: "linux-ppc", multiarch: "" }
+          - { image: "linux-ppc64le", multiarch: "" }
+          - { image: "linux-ppc64le-lts", multiarch: "" }
           # Linux m68k images
-          - {
-              image: "linux-m68k-uclibc",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "linux-generic32 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "--host=m68k-unknown-uclinux-uclibc --target=m68k-unknown-uclinux-uclibc",
-            }
+          - { image: "linux-m68k-uclibc", multiarch: "" }
           # Linux xtensa images
-          - {
-              image: "linux-xtensa-uclibc",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=xtensa-fsf-linux-uclibc --target=xtensa-fsf-linux-uclibc",
-            }
-          # Windows x86_x64 images
-          - {
-              image: "windows-static-x64",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern COMP=mingw",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw64 no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          - {
-              image: "windows-static-x64-posix",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern COMP=mingw",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw64 no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          - {
-              image: "windows-shared-x64",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw64 no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          - {
-              image: "windows-shared-x64-posix",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw64 no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
+          - { image: "linux-xtensa-uclibc", multiarch: "" }
+          # Windows x86_64 images
+          - { image: "windows-static-x64", multiarch: "" }
+          - { image: "windows-static-x64-posix", multiarch: "" }
+          - { image: "windows-shared-x64", multiarch: "" }
+          - { image: "windows-shared-x64-posix", multiarch: "" }
           # Windows x86 images
-          - {
-              image: "windows-static-x86",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-32-sse41-popcnt COMP=mingw",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          - {
-              image: "windows-shared-x86",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
+          - { image: "windows-static-x86", multiarch: "" }
+          - { image: "windows-shared-x86", multiarch: "" }
           # Windows arm images
-          - {
-              image: "windows-armv7",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "ARCH=armv7-neon COMP=clang",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "yes",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          - {
-              image: "windows-arm64",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "ARCH=armv8 COMP=clang",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "mingw64 no-asm",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "yes",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
+          - { image: "windows-armv7", multiarch: "" }
+          - { image: "windows-arm64", multiarch: "" }
           # manylinux_2_28 images
-          - {
-              image: "manylinux_2_28-x64",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-x86_64",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "",
-            }
-          - {
-              image: "manylinux_2_28-aarch64",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-aarch64",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-unknown-linux-gnu --target=aarch64-unknown-linux-gnu",
-            }
+          - { image: "manylinux_2_28-x64", multiarch: "" }
+          - { image: "manylinux_2_28-aarch64", multiarch: "" }
+          # manylinux_2_34 images
+          - { image: "manylinux_2_34-x64", multiarch: "" }
+          - { image: "manylinux_2_34-aarch64", multiarch: "" }
           # manylinux2014 images
-          - {
-              image: "manylinux2014-x86",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-32-sse41-popcnt",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-x86",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "",
-            }
-          - {
-              image: "manylinux2014-x64",
-              multiarch: "",
-              stockfish: "yes",
-              stockfish_arg: "ARCH=x86-64-modern",
-              ninja: "yes",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-x86_64",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "yes",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "",
-            }
-          - {
-              image: "manylinux2014-aarch64",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-aarch64",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-unknown-linux-gnu --target=aarch64-unknown-linux-gnu",
-            }
-          # manylinux_2_34 aarch64 images
-          - {
-              image: "manylinux_2_34-aarch64",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "yes",
-              openssl_arg: "linux-aarch64",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "yes",
-              cpython_arg: "--host=aarch64-unknown-linux-gnu --target=aarch64-unknown-linux-gnu",
-            }
-          # web-wasm images
-          - {
-              image: "web-wasm",
-              multiarch: "yes",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
-              C: "no",
-              C_arg: "",
-              SQLite: "yes",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "-DPLATFORM=Web",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          # web-wasi images
-          - {
-              image: "web-wasi",
-              multiarch: "yes",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
-          # web-wasi-threads images
-          - {
-              image: "web-wasi-threads",
-              multiarch: "yes",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "linux-generic64 no-asm no-threads no-engine no-hw no-weak-ssl-ciphers no-dtls no-shared no-dso",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-            }
+          - { image: "manylinux2014-x86", multiarch: "" }
+          - { image: "manylinux2014-x64", multiarch: "" }
+          - { image: "manylinux2014-aarch64", multiarch: "" }
+          # web-wasm/web-wasi images
+          - { image: "web-wasm", multiarch: "yes" }
+          - { image: "web-wasi", multiarch: "yes" }
+          - { image: "web-wasi-threads", multiarch: "yes" }
+          - { image: "web-wasi-emulated-threads", multiarch: "yes" }
           # Bare metal images
-          - {
-              image: "bare-armv7emhf-nano_newlib",
-              multiarch: "",
-              stockfish: "no",
-              stockfish_arg: "",
-              ninja: "no",
-              ninja_arg: "",
-              openssl: "no",
-              openssl_arg: "",
-              C: "no",
-              C_arg: "",
-              SQLite: "no",
-              SQLite_arg: "",
-              llama_cpp: "no",
-              llama_cpp_arg: "",
-              fmt: "no",
-              fmt_arg: "",
-              raylib: "no",
-              raylib_arg: "",
-              cpython: "no",
-              cpython_arg: "",
-              mbedtls: "yes",
-              mbedtls_arg: "",
-              libopencm3: "yes",
-              libopencm3_arg: "",
-            }
+          - { image: "bare-armv7emhf-nano_newlib", multiarch: "" }
     steps:
       - name: checkout code
         uses: actions/checkout@v6
@@ -1380,176 +178,45 @@ jobs:
           submodules: "recursive"
           fetch-depth: 1
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: set host_arch
         run: |
           echo "HOST_ARCH=$(uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')" >> $GITHUB_ENV
 
-      - uses: actions/download-artifact@v8
+      - name: download base (amd64)
+        if: env.HOST_ARCH == 'amd64'
+        uses: actions/download-artifact@v8
         with:
           name: cache
+          path: ./cache
+
+      - name: download base (arm64)
+        if: env.HOST_ARCH == 'arm64'
+        uses: actions/download-artifact@v8
+        with:
+          name: cache-arm64
           path: ./cache
 
       - name: load base
         run: xz -d -k < ./cache/base.tar.xz | docker load
 
-      - uses: actions/download-artifact@v8
-        with:
-          name: cache-${{ matrix.os }}
-          path: ./cache
-
-      - name: load multiarch base
-        run: xz -d -k < ./cache/base-multiarch.tar.xz | docker load
-
       - name: build
-        env:
-          BUILD_CMD: build --cache-from type=gha --cache-to type=gha,mode=max
-        run: |
-          if test "${{ matrix.arch_name.multiarch }}" = "yes"; then
-            make ${{ matrix.arch_name.image }}
-          elif test "${{ env.HOST_ARCH }}" = "amd64"; then
-            make ${{ matrix.arch_name.image }}
-          fi
+        if: matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64'
+        run: make ${{ matrix.arch_name.image }}
 
       - name: basic test
-        run: |
-          if test "${{ matrix.arch_name.multiarch }}" = "yes" || test "${{ env.HOST_ARCH }}" = "amd64"; then
-            make ${{ matrix.arch_name.image }}.test
-          fi
+        if: matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64'
+        run: make ${{ matrix.arch_name.image }}.test
 
-      # Updated on 15/07/2025
-      - name: stockfish build test
-        if: ${{ matrix.arch_name.stockfish == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone --depth 1 --branch sf_17.1 https://github.com/official-stockfish/Stockfish.git
-          cd Stockfish
-          ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -C src net
-          ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -C src build ${{ matrix.arch_name.stockfish_arg }} -j${nproc}
-          cd ..
-          rm -rf Stockfish
-
-      # Updated on 12/09/2022
-      - name: ninja build test
-        if: ${{ matrix.arch_name.ninja == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone --depth 1 --branch v1.11.1 https://github.com/ninja-build/ninja.git
-          cd ninja
-          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }} ${{ matrix.arch_name.ninja_arg }}
-
-      # Updated on 04/04/2025 (Use openSSL_1_1_1w to fix error: implicit declaration of function 'memcmp')
-      - name: openssl build test
-        if: ${{ matrix.arch_name.openssl == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone --depth 1 --branch OpenSSL_1_1_1w https://github.com/openssl/openssl.git
-          cd openssl
-          wget https://raw.githubusercontent.com/mavlink/MAVSDK/17ad598f0e004d225f5e939aa2947a95791f2f9b/cpp/third_party/openssl/dockcross-android.patch
-          patch -p 0 < dockcross-android.patch
-          ./../tools/dockcross-command.sh ${{ matrix.arch_name.image }} ./Configure ${{ matrix.arch_name.openssl_arg }}
-          ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -j${nproc}
-          cd ..
-          rm -rf openssl
-
-      # Updated on 12/09/2022
-      - name: C build test
-        if: ${{ matrix.arch_name.C == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone https://github.com/TheAlgorithms/C.git
-          cd C
-          git checkout b0a41bb38c67ddebb31d3fe06d11e171410c3379
-          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }} ${{ matrix.arch_name.C_arg }}
-          cd ..
-          rm -rf C
-
-      # Updated on 03/08/2025
-      - name: SQLite build test
-        if: ${{ matrix.arch_name.SQLite == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone https://github.com/sqlite/sqlite.git
-          cd sqlite
-          git checkout 1cf61ce636915a5e92d4aa883755cee258aa98d6
-          ./../tools/dockcross-command.sh ${{ matrix.arch_name.image }} ./configure ${{ matrix.arch_name.SQLite_arg }}
-          ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -j${nproc} sqlite3 sqlite3.c sqldiff
-          cd ..
-          rm -rf sqlite
-
-      # Updated on 03/08/2024
-      - name: llama.cpp build test
-        if: ${{ matrix.arch_name.llama_cpp == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone https://github.com/ggerganov/llama.cpp.git
-          cd llama.cpp
-          git checkout 76614f352e94d25659306d9e97321f204e5de0d3
-          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }} ${{ matrix.arch_name.llama_cpp_arg }}
-          cd ..
-          rm -rf llama.cpp
-
-      # Updated on 12/09/2022
-      - name: fmt build test
-        if: ${{ matrix.arch_name.fmt == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone --depth 1 --branch 9.1.0 https://github.com/fmtlib/fmt.git
-          cd fmt
-          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }} ${{ matrix.arch_name.fmt_arg }} -DFMT_DOC=OFF
-          cd ..
-          rm -rf fmt
-
-      # Updated on 19/05/2022
-      - name: cpython build test
-        if: ${{ matrix.arch_name.cpython == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone --depth 1 --branch v3.11.2 https://github.com/python/cpython.git
-          cd cpython
-          ./../tools/dockcross-command.sh ${{ matrix.arch_name.image }} ./configure ac_cv_file__dev_ptmx=no ac_cv_file__dev_ptc=no --disable-ipv6 ${{ matrix.arch_name.cpython_arg }} --build=x86_64-linux-gnu --with-build-python --enable-shared
-          ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} -j${nproc}
-          cd ..
-          rm -rf cpython
-
-      # Updated on 12/09/2022 (4.2.0 branch not working)
-      - name: raylib build test
-        if: ${{ matrix.arch_name.raylib == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone https://github.com/raysan5/raylib.git
-          cd raylib
-          git checkout a12ddacb7bfbc6e552e6145456f2fe6dfdfbe1c7
-          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }} ${{ matrix.arch_name.raylib_arg }}
-          cd ..
-          rm -rf raylib
-
-      # Updated on 31/3/2022
-      - name: mbedtls build test
-        if: ${{ matrix.arch_name.mbedtls == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone --depth 1 --branch archive/baremetal https://github.com/Mbed-TLS/mbedtls.git
-          cd mbedtls
-          ./../tools/dockcross-command.sh ${{ matrix.arch_name.image }} scripts/config.pl baremetal
-          ./../tools/dockcross-cmake-builder.sh ${{ matrix.arch_name.image }} ${{ matrix.arch_name.fmt_arg }} 
-          cd ..
-          rm -rf mbedtls
-
-      # Updated on 20/6/2022
-      - name: libopencm3 build test
-        if: ${{ matrix.arch_name.libopencm3 == 'yes' && (matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64') }}
-        run: |
-          git clone https://github.com/libopencm3/libopencm3.git
-          cd libopencm3
-          git checkout 467522778329d6f41781a6c951b77d6ff6744de6
-          ./../tools/dockcross-make-builder.sh ${{ matrix.arch_name.image }} "PREFIX=/usr/xcc/arm-none-eabi/bin/arm-none-eabi- \
-                                                                              TARGETS='stm32/f1 stm32/f2 stm32/f3 stm32/f4 stm32/f7 \
-                                                                              stm32/l1 stm32/l4 stm32/g4 stm32/h7 gd32/f1x0 lpc13xx \
-                                                                              lpc17xx lpc43xx/m4 lm3s lm4f msp432/e4 efm32/tg efm32/g \
-                                                                              efm32/lg efm32/gg efm32/wg efm32/ezr32wg nrf/51 nrf/52 \
-                                                                              sam/3a sam/3n sam/3s sam/3u sam/3x sam/4l vf6xx pac55xx' \
-                                                                              -j`nproc`"
-          cd ..
-          rm -rf libopencm3
+      - name: extra tests
+        if: matrix.arch_name.multiarch == 'yes' || env.HOST_ARCH == 'amd64'
+        run: make ${{ matrix.arch_name.image }}.test-extra
 
       - name: archive ${{ matrix.arch_name.image }}-${{ env.HOST_ARCH }}
         if: matrix.arch_name.multiarch == 'yes'
         run: |
           mkdir -p cache-${{ matrix.arch_name.image }}-${{ env.HOST_ARCH }}
-          docker save dockcross/${{ matrix.arch_name.image }}:latest-${{ env.HOST_ARCH }} | xz -e6 -T0 > ./cache-${{ matrix.arch_name.image }}-${{ env.HOST_ARCH }}/${{ matrix.arch_name.image }}-${{ env.HOST_ARCH }}.tar.xz
+          docker tag ${{ env.ORG }}/${{ matrix.arch_name.image }}:latest ${{ env.ORG }}/${{ matrix.arch_name.image }}:latest-${{ env.HOST_ARCH }}
+          docker save ${{ env.ORG }}/${{ matrix.arch_name.image }}:latest-${{ env.HOST_ARCH }} | xz -e6 -T0 > ./cache-${{ matrix.arch_name.image }}-${{ env.HOST_ARCH }}/${{ matrix.arch_name.image }}-${{ env.HOST_ARCH }}.tar.xz
 
       - name: save ${{ matrix.arch_name.image }}-${{ matrix.os }}
         uses: actions/upload-artifact@v7
@@ -1568,8 +235,7 @@ jobs:
 
       - name: deploy-not-multi-arch
         if: github.ref == 'refs/heads/master' && matrix.arch_name.multiarch != 'yes' && env.HOST_ARCH == 'amd64'
-        run: |
-            make ${{ matrix.arch_name.image }}.push
+        run: make ${{ matrix.arch_name.image }}.push
 
   deploy-multi-arch-images:
     needs:
@@ -1578,7 +244,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image_name: ["linux-arm64", "web-wasm", "web-wasi", "web-wasi-threads"]
+        image_name: ["linux-arm64", "web-wasm", "web-wasi", "web-wasi-threads", "web-wasi-emulated-threads"]
     steps:
       - name: checkout code
         uses: actions/checkout@v6
@@ -1620,14 +286,9 @@ jobs:
       - name: deploy-multi-arch
         if: github.ref == 'refs/heads/master'
         run: |
-            docker images
-
-            make ${{ matrix.image_name }}.tag-amd64
-            make ${{ matrix.image_name }}.push-amd64
-
-            export HOST_ARCH=arm64
-            make ${{ matrix.image_name }}.tag-arm64
-            make ${{ matrix.image_name }}.push-arm64
-            unset HOST_ARCH
-
-            make ${{ matrix.image_name }}.push
+          docker push ${{ env.ORG }}/${{ matrix.image_name }}:latest-amd64
+          docker push ${{ env.ORG }}/${{ matrix.image_name }}:latest-arm64
+          manifest-tool push from-args \
+            --platforms linux/amd64,linux/arm64 \
+            --template ${{ env.ORG }}/${{ matrix.image_name }}:latest-ARCH \
+            --target ${{ env.ORG }}/${{ matrix.image_name }}:latest

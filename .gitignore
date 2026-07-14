@@ -1,4 +1,5 @@
 bin
+.dockcross-test-cache
 dockcross
 dockcross-*
 build

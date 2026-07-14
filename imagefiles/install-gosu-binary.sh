@@ -56,10 +56,22 @@ url_key="https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-$
 # download and verify the signature
 export GNUPGHOME="$(mktemp -d)"
 
-gpg --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 || \
-gpg --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 || \
-gpg --keyserver hkp://pgp.key-server.io:80 --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 || \
-gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
+GOSU_GPG_KEY=B42F6819007F00F88E364FD4036A9C25BF357DD4
+
+gpg --keyserver hkps://keys.openpgp.org --recv-keys "$GOSU_GPG_KEY" || \
+gpg --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys "$GOSU_GPG_KEY" || \
+gpg --keyserver hkp://pgp.key-server.io:80 --recv-keys "$GOSU_GPG_KEY" || \
+gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "$GOSU_GPG_KEY" || \
+{
+  echo "gpg keyserver lookups failed, falling back to fetching the key over HTTPS" >&2
+  curl --connect-timeout 30 \
+      --max-time 30 \
+      --retry 5 \
+      --retry-delay 10 \
+      --retry-max-time 60 \
+      -fSL "https://keys.openpgp.org/pks/lookup?op=get&options=mr&search=0x${GOSU_GPG_KEY}" \
+    | gpg --import
+}
 
 echo "Downloading $url"
 curl --connect-timeout 30 \

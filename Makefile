@@ -1,440 +1,420 @@
+# ==============================================================================
+# Preset detection
+# ==============================================================================
+PRESET_DIR       ?= .
 
-#
-# Parameters
-#
+HOST_ARCH        := $(or $(HOST_ARCH), $(shell uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/'))
 
-# Name of the docker-equivalent executable for building images.
-# OCI: open container interface.
-# Common values: docker, podman, buildah
-DOCKER := $(or $(OCI_EXE), docker)
-BUILD_DOCKER := $(or $(BUILD_DOCKER), $(DOCKER))
-MANIFEST_TOOL := $(or $(MANIFEST_TOOL_EXE), manifest-tool)
-RM = --rm
+preset-path = $(if $(filter base,$(1)),$(PRESET_DIR),$(PRESET_DIR)/$(1))
 
-# Name of the docker-equivalent executable for running test containers.
-# Supports the use case:
-#
-#   DOCKER=buildah
-#   TEST_DOCKER=podman
-#
-# because buildah does not run containers.
-TEST_DOCKER := $(or $(TEST_DOCKER), $(DOCKER))
+build-context-dir = $(if $(BUILD_CONTEXT_DIR),$(BUILD_CONTEXT_DIR),$(call preset-path,$(1)))
 
-# The build sub-command. Use:
-#
-#   export "BUILD_CMD=buildx build --platform linux/amd64,linux/arm64"
-#
-# to generate multi-platform images.
-BUILD_CMD := $(or $(BUILD_CMD), build)
-TAG_FLAG := $(or $(TAG_FLAG), --tag)
+PRESET_FILES := $(shell find $(PRESET_DIR) -name .git -prune -o -mindepth 2 -name "preset.mk" -print)
+ALL_PRESETS  := base $(patsubst $(PRESET_DIR)/%/preset.mk,%,$(PRESET_FILES))
 
-# Docker organization to pull the images from
-ORG = dockcross
+CURRENT_TARGET_NAME := $(firstword $(MAKECMDGOALS))
 
-# Host architecture
-HOST_ARCH := $(or $(HOST_ARCH), $(shell uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/'))
+POSSIBLE_PRESET := $(basename $(CURRENT_TARGET_NAME))
 
-# Directory where to generate the dockcross script for each images (e.g bin/dockcross-manylinux2014-x64)
-BIN = ./bin
-
-# These images are built using the "build implicit rule"
-STANDARD_IMAGES := android-arm android-arm64 android-x86 android-x86_64 \
-	linux-i686 linux-x86 linux-x64 linux-x64-clang linux-arm64-musl linux-arm64-full \
-	linux-armv5 linux-armv5-musl linux-armv5-uclibc linux-m68k-uclibc linux-s390x linux-x64-tinycc \
-	linux-armv6 linux-armv6-lts linux-armv6-musl linux-arm64-lts linux-mipsel-lts \
-	linux-armv7l-musl linux-armv7 linux-armv7a linux-armv7-lts linux-armv7a-lts linux-x86_64-full \
-	linux-loongarch64 linux-mips linux-mips-uclibc linux-mips-lts \
-	linux-ppc linux-ppc64le linux-ppc64le-lts linux-riscv64 linux-riscv32 linux-xtensa-uclibc \
-	windows-static-x86 windows-static-x64 windows-static-x64-posix windows-armv7 \
-	windows-shared-x86 windows-shared-x64 windows-shared-x64-posix windows-arm64 \
-	bare-armv7emhf-nano_newlib
-
-# Generated Dockerfiles.
-GEN_IMAGES := android-arm android-arm64 \
-	linux-i686 linux-x86 linux-x64 linux-x64-clang linux-arm64 linux-arm64-musl linux-arm64-full \
-	manylinux_2_28-x64 manylinux_2_34-x64 \
-	manylinux2014-x64 manylinux2014-x86 \
-	manylinux2014-aarch64 manylinux_2_28-aarch64 manylinux_2_34-aarch64 linux-arm64-lts \
-	web-wasm web-wasi web-wasi-emulated-threads web-wasi-threads \
-	linux-loongarch64 linux-mips linux-mips-uclibc linux-mips-lts windows-arm64 windows-armv7 \
-	windows-static-x86 windows-static-x64 windows-static-x64-posix \
-	windows-shared-x86 windows-shared-x64 windows-shared-x64-posix \
-	linux-armv7 linux-armv7a linux-armv7l-musl linux-armv7-lts linux-armv7a-lts linux-x86_64-full \
-	linux-armv6 linux-armv6-lts linux-armv6-musl linux-mipsel-lts \
-	linux-armv5 linux-armv5-musl linux-armv5-uclibc linux-ppc linux-ppc64le linux-ppc64le-lts linux-s390x \
-	linux-riscv64 linux-riscv32 linux-m68k-uclibc linux-x64-tinycc linux-xtensa-uclibc \
-	bare-armv7emhf-nano_newlib
-
-# Generate both amd64 and arm64 images
-MULTIARCH_IMAGES :=  linux-arm64 \
-	web-wasi web-wasi-emulated-threads
-
-GEN_IMAGE_DOCKERFILES = $(addsuffix /Dockerfile,$(GEN_IMAGES))
-
-# These images are expected to have explicit rules for *both* build and testing
-NON_STANDARD_IMAGES := manylinux_2_28-x64 manylinux_2_34-x64 manylinux2014-x64 manylinux2014-x86 \
-		      manylinux2014-aarch64 manylinux_2_28-aarch64 manylinux_2_34-aarch64 web-wasm web-wasi-emulated-threads web-wasi-threads
-
-# Docker composite files
-DOCKER_COMPOSITE_SOURCES = common.docker common.debian common.manylinux2014 common.manylinux_2_28 common.manylinux_2_34 common.buildroot \
-	common.crosstool common.webassembly common.windows common-manylinux.crosstool common-manylinux_2_28.crosstool common-manylinux_2_34.crosstool common.dockcross \
-	common.label-and-env
-DOCKER_COMPOSITE_FOLDER_PATH = common/
-DOCKER_COMPOSITE_PATH = $(addprefix $(DOCKER_COMPOSITE_FOLDER_PATH),$(DOCKER_COMPOSITE_SOURCES))
-
-# This list all available images
-IMAGES := $(STANDARD_IMAGES) $(NON_STANDARD_IMAGES) $(MULTIARCH_IMAGES)
-
-# Optional arguments for test runner (test/run.py) associated with "testing implicit rule"
-linux-x64-tinycc.test_ARGS = --languages C
-windows-static-x86.test_ARGS = --exe-suffix ".exe"
-windows-static-x64.test_ARGS = --exe-suffix ".exe"
-windows-static-x64-posix.test_ARGS = --exe-suffix ".exe"
-windows-shared-x86.test_ARGS = --exe-suffix ".exe"
-windows-shared-x64.test_ARGS = --exe-suffix ".exe"
-windows-shared-x64-posix.test_ARGS = --exe-suffix ".exe"
-windows-armv7.test_ARGS = --exe-suffix ".exe"
-windows-arm64.test_ARGS = --exe-suffix ".exe"
-bare-armv7emhf-nano_newlib.test_ARGS = --linker-flags="--specs=nosys.specs"
-
-# Tag images with date and Git short hash in addition to revision
-TAG := $(shell date '+%Y%m%d')-$(shell git rev-parse --short HEAD)
-
-# shellcheck executable
-SHELLCHECK := shellcheck
-
-# Defines the level of verification (error, warning, info...)
-SHELLCHECK_SEVERITY_LEVEL := error
-
-#
-# images: This target builds all IMAGES (because it is the first one, it is built by default)
-#
-images: base $(IMAGES)
-
-#
-# test: This target ensures all IMAGES are built and run the associated tests
-#
-test: base.test $(addsuffix .test,$(IMAGES))
-
-#
-# Generic Targets (can specialize later).
-#
-$(GEN_IMAGE_DOCKERFILES) Dockerfile: %Dockerfile: %Dockerfile.in $(DOCKER_COMPOSITE_PATH)
-	sed $(foreach f,$(DOCKER_COMPOSITE_SOURCES),-e '/$(f)/ r $(DOCKER_COMPOSITE_FOLDER_PATH)$(f)') $< > $@
-
-#
-# web-wasm
-#
-ifeq ($(HOST_ARCH),amd64)
-  EMSCRIPTEN_HOST_ARCH_TAG = ""
+ifeq ($(POSSIBLE_PRESET),base)
+    -include $(PRESET_DIR)/preset.mk
+else ifneq ($(wildcard $(PRESET_DIR)/$(POSSIBLE_PRESET)/preset.mk),)
+    include $(PRESET_DIR)/$(POSSIBLE_PRESET)/preset.mk
 endif
-ifeq ($(HOST_ARCH),arm64)
-  EMSCRIPTEN_HOST_ARCH_TAG = "-arm64"
+
+# ==============================================================================
+# Main config Makefile for Docker SDK Images
+# ==============================================================================
+AUTHOR         ?= dockcross
+WEB_SITE       ?= dockcross.org
+
+# Registries
+BASE_IMAGE_REGISTRY   ?= docker.io
+BASE_IMAGE_PATH       ?=
+OUTPUT_IMAGE_REGISTRY ?= docker.io
+OUTPUT_IMAGE_PATH     ?= dockcross
+
+# Docker Config
+DOCKER_EXEC      ?= docker
+PROGRESS_OUTPUT  ?= plain
+
+PUSH_ON_BUILD ?= false
+ifeq ($(PUSH_ON_BUILD),true)
+	DOCKER_DRIVER := --push
+	BUILD_IMAGE_ARGS += --sbom=true --provenance=true
+	BUILD_IMAGE_ARGS += --cache-from=type=registry,ref=$(OUTPUT_IMAGE_FINAL):cache
+	BUILD_IMAGE_ARGS += --cache-to=type=registry,ref=$(OUTPUT_IMAGE_FINAL):cache,mode=max
+else
+	DOCKER_DRIVER := --load
 endif
-web-wasm: web-wasm/Dockerfile
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	cp -r test web-wasm/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/web-wasm:$(TAG)-$(HOST_ARCH) \
-		$(TAG_FLAG) $(ORG)/web-wasm:latest-$(HOST_ARCH) \
-		--build-arg IMAGE=$(ORG)/web-wasm \
-		--build-arg VERSION=$(TAG) \
-		--build-arg HOST_ARCH_TAG=$(EMSCRIPTEN_HOST_ARCH_TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		web-wasm
-	rm -rf web-wasm/test
-	rm -rf $@/imagefiles
 
-web-wasm.test: web-wasm
-	cp -r test web-wasm/
-	$(TEST_DOCKER) run $(RM) $(ORG)/web-wasm:latest-$(HOST_ARCH) > $(BIN)/dockcross-web-wasm && chmod +x $(BIN)/dockcross-web-wasm
-	$(BIN)/dockcross-web-wasm -i $(ORG)/web-wasm:latest-$(HOST_ARCH) python test/run.py --exe-suffix ".js"
-	rm -rf web-wasm/test
+ARCH_LIST        ?= linux/$(HOST_ARCH)
+PLATFORMS        ?= $(subst $(space),$(comma),$(strip $(ARCH_LIST)))
+TMPFS_SIZE       ?= 4g
 
-#
-# web-wasi-threads
-#
-web-wasi-threads: web-wasi web-wasi-threads/Dockerfile
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	cp -r test web-wasi-threads/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/web-wasi-threads:$(TAG)-$(HOST_ARCH) \
-		-t $(ORG)/web-wasi-threads:latest-$(HOST_ARCH) \
-		--build-arg IMAGE=$(ORG)/web-wasi-threads \
-		--build-arg VERSION=$(TAG) \
+DOCKER_BUILD_NETWORK ?= host
+
+# Folders
+COMMON_DIR       ?= common
+BIN_DIR          ?= ./bin
+TEST_SCRATCH_DIR ?= ./.dockcross-test-cache
+
+EXTRA_TESTS ?=
+
+ORG ?= $(OUTPUT_IMAGE_REGISTRY)/$(OUTPUT_IMAGE_PATH)
+
+DOCKER_COMPOSITE_SOURCES = common.docker common.debian \
+    common.manylinux2014 common.manylinux_2_28 common.manylinux_2_34 \
+    common.buildroot common.crosstool common.webassembly common.windows \
+    common-manylinux.crosstool common-manylinux_2_28.crosstool common-manylinux_2_34.crosstool \
+    common.dockcross common.label-and-env
+
+# RUN/TEST
+TEST_IMAGE_CMD  ?= python3 test/run.py
+TEST_IMAGE_ARGS ?=
+RUN_IMAGE_CMD   ?= /bin/bash
+RUN_IMAGE_ARGS  ?=
+
+BUILD_CONTEXT_DIR ?=
+STATIC_DOCKERFILE ?= no
+DEPENDS_ON        ?= base.build
+EXTRA_BUILD_ARGS  ?=
+
+BIND_HOST_DIR := $(shell pwd)
+BIND_CONTAINER_DIR ?= /work
+WORKDIR ?= /work
+
+# Automatic variables
+CURRENT_USER := $(shell whoami)
+UID := $(shell id -u ${CURRENT_USER})
+GID := $(shell id -g ${CURRENT_USER})
+CURRENT_GROUP := $(shell id -gn ${CURRENT_USER})
+
+BUILDER_ENV := -e BUILDER_UID=$(UID) -e BUILDER_GID=$(GID) -e BUILDER_USER=$(CURRENT_USER) -e BUILDER_GROUP=$(CURRENT_GROUP)
+DATE           := $(shell date -u +"%Y%m%d")
+GIT_SHA := $(shell git rev-parse --short HEAD 2>/dev/null || echo nogit)
+GIT_ORIGIN := $(shell git config --get remote.origin.url 2>/dev/null || echo unknown)
+UUID           := $(shell uuidgen)
+
+TRIVY_IMAGE    ?= aquasec/trivy:0.68.2
+HADOLINT_IMAGE ?= hadolint/hadolint:v2.14.0
+SHELLCHECK_IMAGE ?= koalaman/shellcheck:stable
+
+# Tag images with date and Git short hash, mirroring the historical dockcross tagging scheme
+TAG := $(DATE)-$(GIT_SHA)
+
+comma := ,
+space := $(subst ,, )
+
+# ==============================================================================
+# Presets logic
+# ==============================================================================
+
+PRESET_TARGETS := all help build test push pull generate scan lint update clean run inspect sbom script \
+	rebuild sign history cache check prepare-imagefiles test-extra
+.PHONY: $(ALL_PRESETS)
+
+.DEFAULT_GOAL := list
+
+define BIND_PRESET_DEPENDENCIES
+  $(1).test:     $(1).build
+  $(1).run:      $(1).build
+  $(1).push:     $(1).test
+  $(1).scan:     $(1).build
+  $(1).lint:     $(1).generate
+  $(1).sbom:     $(1).build
+  $(1).inspect:  $(1).build
+  $(1).history:  $(1).build
+  $(1).script:   $(1).build
+endef
+
+$(foreach p,$(ALL_PRESETS),$(eval $(call BIND_PRESET_DEPENDENCIES,$(p))))
+
+# Generate final image names
+ifeq ($(strip $(BASE_IMAGE_PATH)),)
+    BASE_IMAGE_FINAL := $(BASE_IMAGE_REGISTRY)/$(BASE_IMAGE_NAME)
+else
+    BASE_IMAGE_FINAL := $(BASE_IMAGE_REGISTRY)/$(BASE_IMAGE_PATH)/$(BASE_IMAGE_NAME)
+endif
+
+OUTPUT_IMAGE_FINAL := $(ORG)/$(OUTPUT_IMAGE_NAME)
+
+# ==============================================================================
+# Mandatory variables check
+# ==============================================================================
+MANDATORY_VARS = BASE_IMAGE_NAME BASE_IMAGE_TAG OUTPUT_IMAGE_NAME OUTPUT_IMAGE_REGISTRY \
+	OUTPUT_IMAGE_PATH BASE_IMAGE_REGISTRY
+
+# ==============================================================================
+# Useful functions
+# ==============================================================================
+define docker-tags
+	$(OUTPUT_IMAGE_FINAL):latest \
+	$(OUTPUT_IMAGE_FINAL):latest-$(HOST_ARCH) \
+	$(OUTPUT_IMAGE_FINAL):$(TAG)
+endef
+
+define docker-push-tags
+	$(OUTPUT_IMAGE_FINAL):latest \
+	$(OUTPUT_IMAGE_FINAL):$(TAG)
+endef
+
+define docker-run-cmd
+	$(DOCKER_EXEC) run --rm $(1) $(BUILDER_ENV) \
+		--security-opt no-new-privileges \
+		--mount type=bind,source=$(BIND_HOST_DIR),target=$(BIND_CONTAINER_DIR) \
+		--workdir $(WORKDIR) \
+		--mount type=tmpfs,target=/tmp,tmpfs-mode=1777,tmpfs-size=$(TMPFS_SIZE) \
+		--platform $(firstword $(ARCH_LIST)) \
+		--name $(OUTPUT_IMAGE_NAME)-$(UUID) \
+		$(OUTPUT_IMAGE_FINAL):latest $(2) $(3)
+endef
+
+define extra-test-run
+	$(DOCKER_EXEC) run --rm $(BUILDER_ENV) \
+		--mount type=bind,source=$(abspath $(TEST_SCRATCH_DIR)/$(1)),target=/work \
+		--workdir /work \
+		--platform $(firstword $(ARCH_LIST)) \
+		$(OUTPUT_IMAGE_FINAL):latest bash -c "$(2)"
+endef
+
+# ==============================================================================
+# Preset targets
+# ==============================================================================
+
+.PHONY: %.all %.generate %.build %.test %.run %.push %.pull %.scan %.clean %.prune %.update %.lint %.inspect %.sbom %.script %.prepare-imagefiles \
+	%.rebuild %.sign %.history %.cache %.check %.test-extra \
+	%.test-stockfish %.test-ninja %.test-openssl %.test-C %.test-SQLite %.test-llama_cpp \
+	%.test-fmt %.test-cpython %.test-raylib %.test-mbedtls %.test-libopencm3
+
+$(ALL_PRESETS): %: %.build
+
+%.all: %.update %.generate %.build %.test %.check %.push ;
+
+.PHONY: %.guard
+%.guard:
+	$(foreach v,$(MANDATORY_VARS), \
+	  $(if $(strip $($(v))),, \
+	    $(error Missing mandatory var: $(v) (preset=$*))))
+
+%.generate: %.guard %.clean
+ifeq ($(STATIC_DOCKERFILE),yes)
+	@test -f $(call preset-path,$*)/Dockerfile || \
+	  (echo "Missing committed Dockerfile for $* (STATIC_DOCKERFILE=yes)" && exit 1)
+else
+	@echo ">>> Generating Dockerfile for $*"
+	@sed $(foreach f,$(DOCKER_COMPOSITE_SOURCES),\
+		-e '/$(f)/ r $(COMMON_DIR)/$(f)') \
+		$(call preset-path,$*)/Dockerfile.in > $(call preset-path,$*)/Dockerfile
+endif
+
+%.prepare-imagefiles:
+	@ctx="$(call build-context-dir,$*)"; \
+	if [ "$$ctx" != "$(PRESET_DIR)" ]; then \
+	  mkdir -p "$$ctx/imagefiles" && cp -r $(PRESET_DIR)/imagefiles/. "$$ctx/imagefiles/"; \
+	fi
+
+%.build: %.generate %.prepare-imagefiles
+	@$(DOCKER_EXEC) image inspect $(BASE_IMAGE_FINAL):$(BASE_IMAGE_TAG) >/dev/null 2>&1 || \
+		{ $(foreach d,$(DEPENDS_ON),$(MAKE) $(d);) true; }
+	$(DOCKER_EXEC) buildx build $(call build-context-dir,$*) \
+		--file $(call preset-path,$*)/Dockerfile \
+		--network $(DOCKER_BUILD_NETWORK) \
+		--platform $(PLATFORMS) --progress $(PROGRESS_OUTPUT) \
+		$(foreach tag,$(call docker-tags),--tag $(tag)) \
+		--build-arg BUILD_DATE=$(DATE) \
+		--build-arg ORG=$(ORG) \
 		--build-arg HOST_ARCH=$(HOST_ARCH) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		web-wasi-threads
-
-#
-# manylinux2014-aarch64
-#
-manylinux2014-aarch64: manylinux2014-aarch64/Dockerfile manylinux2014-x64
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/manylinux2014-aarch64:$(TAG) \
-		$(TAG_FLAG) $(ORG)/manylinux2014-aarch64:latest \
-		--build-arg IMAGE=$(ORG)/manylinux2014-aarch64 \
+		--build-arg IMAGE=$(ORG)/$(OUTPUT_IMAGE_NAME) \
 		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		-f manylinux2014-aarch64/Dockerfile .
-	rm -rf $@/imagefiles
+		--build-arg VCS_REF=$(GIT_SHA) \
+		--build-arg VCS_URL=$(GIT_ORIGIN) \
+		--build-arg AUTHOR=$(AUTHOR) \
+		--build-arg URL=$(WEB_SITE) \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE_FINAL):$(BASE_IMAGE_TAG) \
+		--build-arg BASE_IMAGE_NAME=$(BASE_IMAGE_NAME) \
+		--build-arg BASE_IMAGE_TAG=$(BASE_IMAGE_TAG) \
+		$(EXTRA_BUILD_ARGS) \
+		$(BUILD_IMAGE_ARGS) $(DOCKER_DRIVER)
 
-manylinux2014-aarch64.test: manylinux2014-aarch64
-	$(TEST_DOCKER) run $(RM) $(ORG)/manylinux2014-aarch64:latest > $(BIN)/dockcross-manylinux2014-aarch64 \
-		&& chmod +x $(BIN)/dockcross-manylinux2014-aarch64
-	$(BIN)/dockcross-manylinux2014-aarch64 -i $(ORG)/manylinux2014-aarch64:latest /opt/python/cp311-cp311/bin/python test/run.py
+%.script: %.build
+	@mkdir -p $(BIN_DIR)
+	$(DOCKER_EXEC) run --rm $(OUTPUT_IMAGE_FINAL):latest > $(BIN_DIR)/dockcross-$* && chmod +x $(BIN_DIR)/dockcross-$*
 
-#
-# manylinux_2_28-aarch64
-#
-manylinux_2_28-aarch64: manylinux_2_28-aarch64/Dockerfile manylinux_2_28-x64
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/manylinux_2_28-aarch64:$(TAG) \
-		$(TAG_FLAG) $(ORG)/manylinux_2_28-aarch64:latest \
-		--build-arg IMAGE=$(ORG)/manylinux_2_28-aarch64 \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		-f manylinux_2_28-aarch64/Dockerfile .
-	rm -rf $@/imagefiles
+%.test: %.build %.script
+	$(call docker-run-cmd,,$(TEST_IMAGE_CMD),$(TEST_IMAGE_ARGS))
 
-manylinux_2_28-aarch64.test: manylinux_2_28-aarch64
-	$(TEST_DOCKER) run $(RM) $(ORG)/manylinux_2_28-aarch64:latest > $(BIN)/dockcross-manylinux_2_28-aarch64 \
-		&& chmod +x $(BIN)/dockcross-manylinux_2_28-aarch64
-	$(BIN)/dockcross-manylinux_2_28-aarch64 -i $(ORG)/manylinux_2_28-aarch64:latest /opt/python/cp311-cp311/bin/python test/run.py
+%.run: %.build
+	$(call docker-run-cmd,-it,$(RUN_IMAGE_CMD),$(RUN_IMAGE_ARGS))
 
-#
-# manylinux_2_34-aarch64
-#
-manylinux_2_34-aarch64: manylinux_2_34-aarch64/Dockerfile manylinux_2_34-x64
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/manylinux_2_34-aarch64:$(TAG) \
-		$(TAG_FLAG) $(ORG)/manylinux_2_34-aarch64:latest \
-		--build-arg IMAGE=$(ORG)/manylinux_2_34-aarch64 \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		-f manylinux_2_34-aarch64/Dockerfile .
-	rm -rf $@/imagefiles
+# ==============================================================================
+# Extra tests
+# ==============================================================================
 
-manylinux_2_34-aarch64.test: manylinux_2_34-aarch64
-	$(TEST_DOCKER) run $(RM) $(ORG)/manylinux_2_34-aarch64:latest > $(BIN)/dockcross-manylinux_2_34-aarch64 \
-		&& chmod +x $(BIN)/dockcross-manylinux_2_34-aarch64
-	$(BIN)/dockcross-manylinux_2_34-aarch64 -i $(ORG)/manylinux_2_34-aarch64:latest /opt/python/cp311-cp311/bin/python test/run.py
+%.test-extra: %.build
+	@$(foreach t,$(EXTRA_TESTS),$(MAKE) $*.test-$(t);)
 
-#
-# manylinux_2_28-x64
-#
-manylinux_2_28-x64: manylinux_2_28-x64/Dockerfile
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/manylinux_2_28-x64:$(TAG) \
-		$(TAG_FLAG) $(ORG)/manylinux_2_28-x64:latest \
-		--build-arg IMAGE=$(ORG)/manylinux_2_28-x64 \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		-f manylinux_2_28-x64/Dockerfile .
-	rm -rf $@/imagefiles
+%.test-stockfish: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/stockfish
+	git clone --depth 1 --branch sf_17.1 https://github.com/official-stockfish/Stockfish.git $(TEST_SCRATCH_DIR)/stockfish
+	$(call extra-test-run,stockfish,make -C src net && make -C src build $(STOCKFISH_ARGS) -j$$(nproc))
+	rm -rf $(TEST_SCRATCH_DIR)/stockfish
 
-manylinux_2_28-x64.test: manylinux_2_28-x64
-	$(TEST_DOCKER) run $(RM) $(ORG)/manylinux_2_28-x64:latest > $(BIN)/dockcross-manylinux_2_28-x64 \
-		&& chmod +x $(BIN)/dockcross-manylinux_2_28-x64
-	$(BIN)/dockcross-manylinux_2_28-x64 -i $(ORG)/manylinux_2_28-x64:latest /opt/python/cp310-cp310/bin/python test/run.py
+%.test-ninja: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/ninja
+	git clone --depth 1 --branch v1.11.1 https://github.com/ninja-build/ninja.git $(TEST_SCRATCH_DIR)/ninja
+	$(call extra-test-run,ninja,cmake -Bbuild -S. -GNinja $(NINJA_ARGS) && cmake --build build)
+	rm -rf $(TEST_SCRATCH_DIR)/ninja
 
-#
-# manylinux_2_34-x64
-#
-manylinux_2_34-x64: manylinux_2_34-x64/Dockerfile
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(DOCKER) build -t $(ORG)/manylinux_2_34-x64:$(TAG) \
-		-t $(ORG)/manylinux_2_34-x64:latest \
-		--build-arg IMAGE=$(ORG)/manylinux_2_34-x64 \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		-f manylinux_2_34-x64/Dockerfile .
-	rm -rf $@/imagefiles
+%.test-openssl: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/openssl
+	git clone --depth 1 --branch OpenSSL_1_1_1w https://github.com/openssl/openssl.git $(TEST_SCRATCH_DIR)/openssl
+	cd $(TEST_SCRATCH_DIR)/openssl && \
+	  wget -q https://raw.githubusercontent.com/mavlink/MAVSDK/17ad598f0e004d225f5e939aa2947a95791f2f9b/cpp/third_party/openssl/dockcross-android.patch && \
+	  patch -p0 < dockcross-android.patch
+	$(call extra-test-run,openssl,./Configure $(OPENSSL_ARGS) && make -j$$(nproc))
+	rm -rf $(TEST_SCRATCH_DIR)/openssl
 
-manylinux_2_34-x64.test: manylinux_2_34-x64
-	$(DOCKER) run $(RM) $(ORG)/manylinux_2_34-x64:latest > $(BIN)/dockcross-manylinux_2_34-x64 \
-		&& chmod +x $(BIN)/dockcross-manylinux_2_34-x64
-	$(BIN)/dockcross-manylinux_2_34-x64 -i $(ORG)/manylinux_2_34-x64:latest /opt/python/cp310-cp310/bin/python test/run.py
+%.test-C: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/C
+	git clone https://github.com/TheAlgorithms/C.git $(TEST_SCRATCH_DIR)/C
+	cd $(TEST_SCRATCH_DIR)/C && git checkout b0a41bb38c67ddebb31d3fe06d11e171410c3379
+	$(call extra-test-run,C,cmake -Bbuild -S. -GNinja $(C_ARGS) && cmake --build build)
+	rm -rf $(TEST_SCRATCH_DIR)/C
 
-#
-# manylinux2014-x64
-#
-manylinux2014-x64: manylinux2014-x64/Dockerfile
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/manylinux2014-x64:$(TAG) \
-		$(TAG_FLAG) $(ORG)/manylinux2014-x64:latest \
-		--build-arg IMAGE=$(ORG)/manylinux2014-x64 \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		-f manylinux2014-x64/Dockerfile .
-	rm -rf $@/imagefiles
+%.test-SQLite: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/sqlite
+	git clone https://github.com/sqlite/sqlite.git $(TEST_SCRATCH_DIR)/sqlite
+	cd $(TEST_SCRATCH_DIR)/sqlite && git checkout 1cf61ce636915a5e92d4aa883755cee258aa98d6
+	$(call extra-test-run,sqlite,./configure $(SQLITE_ARGS) && make -j$$(nproc) sqlite3 sqlite3.c sqldiff)
+	rm -rf $(TEST_SCRATCH_DIR)/sqlite
 
-manylinux2014-x64.test: manylinux2014-x64
-	$(TEST_DOCKER) run $(RM) $(ORG)/manylinux2014-x64:latest > $(BIN)/dockcross-manylinux2014-x64 \
-		&& chmod +x $(BIN)/dockcross-manylinux2014-x64
-	$(BIN)/dockcross-manylinux2014-x64 -i $(ORG)/manylinux2014-x64:latest /opt/python/cp311-cp311/bin/python test/run.py
+%.test-llama_cpp: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/llama.cpp
+	git clone https://github.com/ggerganov/llama.cpp.git $(TEST_SCRATCH_DIR)/llama.cpp
+	cd $(TEST_SCRATCH_DIR)/llama.cpp && git checkout 76614f352e94d25659306d9e97321f204e5de0d3
+	$(call extra-test-run,llama.cpp,cmake -Bbuild -S. -GNinja $(LLAMA_CPP_ARGS) && cmake --build build)
+	rm -rf $(TEST_SCRATCH_DIR)/llama.cpp
 
-#
-# manylinux2014-x86
-#
-manylinux2014-x86: manylinux2014-x86/Dockerfile
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/manylinux2014-x86:$(TAG) \
-		-t $(ORG)/manylinux2014-x86:latest \
-		--build-arg IMAGE=$(ORG)/manylinux2014-x86 \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		-f manylinux2014-x86/Dockerfile .
-	rm -rf $@/imagefiles
+%.test-fmt: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/fmt
+	git clone --depth 1 --branch 9.1.0 https://github.com/fmtlib/fmt.git $(TEST_SCRATCH_DIR)/fmt
+	$(call extra-test-run,fmt,cmake -Bbuild -S. -GNinja $(FMT_ARGS) -DFMT_DOC=OFF && cmake --build build)
+	rm -rf $(TEST_SCRATCH_DIR)/fmt
 
-manylinux2014-x86.test: manylinux2014-x86
-	$(TEST_DOCKER) run $(RM) $(ORG)/manylinux2014-x86:latest > $(BIN)/dockcross-manylinux2014-x86 \
-		&& chmod +x $(BIN)/dockcross-manylinux2014-x86
-	$(BIN)/dockcross-manylinux2014-x86 -i $(ORG)/manylinux2014-x86:latest /opt/python/cp311-cp311/bin/python test/run.py
+%.test-cpython: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/cpython
+	git clone --depth 1 --branch v3.11.2 https://github.com/python/cpython.git $(TEST_SCRATCH_DIR)/cpython
+	$(call extra-test-run,cpython,./configure ac_cv_file__dev_ptmx=no ac_cv_file__dev_ptc=no --disable-ipv6 $(CPYTHON_ARGS) --build=x86_64-linux-gnu --with-build-python --enable-shared && make -j$$(nproc))
+	rm -rf $(TEST_SCRATCH_DIR)/cpython
 
-#
-# base-$(HOST_ARCH)
-#
-base-$(HOST_ARCH): Dockerfile imagefiles/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/base:latest-$(HOST_ARCH) \
-		$(TAG_FLAG) $(ORG)/base:$(TAG)-$(HOST_ARCH) \
-		--build-arg IMAGE=$(ORG)/base \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		.
+%.test-raylib: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/raylib
+	git clone https://github.com/raysan5/raylib.git $(TEST_SCRATCH_DIR)/raylib
+	cd $(TEST_SCRATCH_DIR)/raylib && git checkout a12ddacb7bfbc6e552e6145456f2fe6dfdfbe1c7
+	$(call extra-test-run,raylib,cmake -Bbuild -S. -GNinja $(RAYLIB_ARGS) && cmake --build build)
+	rm -rf $(TEST_SCRATCH_DIR)/raylib
 
-base-$(HOST_ARCH).test: base-$(HOST_ARCH)
-	$(TEST_DOCKER) run $(RM) $(ORG)/base:latest-$(HOST_ARCH) > $(BIN)/dockcross-base && chmod +x $(BIN)/dockcross-base
+%.test-mbedtls: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/mbedtls
+	git clone --depth 1 --branch archive/baremetal https://github.com/Mbed-TLS/mbedtls.git $(TEST_SCRATCH_DIR)/mbedtls
+	$(call extra-test-run,mbedtls,scripts/config.pl baremetal && cmake -Bbuild -S. -GNinja $(MBEDTLS_ARGS) && cmake --build build)
+	rm -rf $(TEST_SCRATCH_DIR)/mbedtls
 
-base: Dockerfile imagefiles/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/base:latest \
-		$(TAG_FLAG) $(ORG)/base:$(TAG) \
-		--build-arg IMAGE=$(ORG)/base \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		.
+%.test-libopencm3: %.build
+	rm -rf $(TEST_SCRATCH_DIR)/libopencm3
+	git clone https://github.com/libopencm3/libopencm3.git $(TEST_SCRATCH_DIR)/libopencm3
+	cd $(TEST_SCRATCH_DIR)/libopencm3 && git checkout 467522778329d6f41781a6c951b77d6ff6744de6
+	$(call extra-test-run,libopencm3,make $(LIBOPENCM3_ARGS) -j$$(nproc))
+	rm -rf $(TEST_SCRATCH_DIR)/libopencm3
 
-base.test: base
-	$(TEST_DOCKER) run $(RM) $(ORG)/base:latest > $(BIN)/dockcross-base && chmod +x $(BIN)/dockcross-base
+%.push: %.test
+	$(foreach tag,$(call docker-push-tags),$(DOCKER_EXEC) push $(tag) &&) true
 
-# display
-#
+%.pull:
+	$(foreach tag,$(call docker-push-tags),$(DOCKER_EXEC) pull $(tag) &&) true
+
+%.update:
+	@echo ">>> Updating base image for $*"
+	$(DOCKER_EXEC) pull $(BASE_IMAGE_FINAL):$(BASE_IMAGE_TAG)
+
+%.clean:
+	@echo "Cleaning generated Dockerfile for $*"
+ifneq ($(STATIC_DOCKERFILE),yes)
+	@rm -f $(call preset-path,$*)/Dockerfile
+endif
+	@ctx="$(call build-context-dir,$*)"; \
+	if [ "$$ctx" != "$(PRESET_DIR)" ]; then rm -rf "$$ctx/imagefiles"; fi
+
+%.prune: %.clean
+	$(DOCKER_EXEC) builder prune -f --filter name=$(OUTPUT_IMAGE_FINAL)
+
+%.inspect:
+	$(DOCKER_EXEC) image inspect \
+		$(OUTPUT_IMAGE_FINAL):latest
+
+%.rebuild:
+	$(MAKE) $*.clean
+	$(MAKE) $*.build BUILD_IMAGE_ARGS="--no-cache"
+
+%.history:
+	$(DOCKER_EXEC) history \
+	  $(OUTPUT_IMAGE_FINAL):latest
+
+%.sbom:
+	syft $(OUTPUT_IMAGE_FINAL):latest -o spdx-json > $*.sbom.json
+
+%.sign:
+	cosign sign $(OUTPUT_IMAGE_FINAL):latest
+
+%.scan:
+	$(DOCKER_EXEC) run --rm \
+	  -v /var/run/docker.sock:/var/run/docker.sock \
+	  $(TRIVY_IMAGE) \
+	  image --severity HIGH,CRITICAL \
+	  $(OUTPUT_IMAGE_FINAL):latest
+
+%.lint: %.generate
+	$(DOCKER_EXEC) run --rm -i $(HADOLINT_IMAGE) < $(call preset-path,$*)/Dockerfile
+
+%.check: %.lint %.scan %.sbom
+
+%.cache:
+	$(DOCKER_EXEC) buildx imagetools inspect $(OUTPUT_IMAGE_FINAL):cache
+
+# ==============================================================================
+# Global targets
+# ==============================================================================
+.PHONY: $(PRESET_TARGETS) clean purge list display_images bash-check
+
+%-all:
+	@$(foreach p,$(ALL_PRESETS),$(MAKE) $(p).$* &&) true
+
+list:
+	@echo "Available presets:"
+	@$(foreach p,$(ALL_PRESETS),echo " - $(p)";)
+
 display_images:
-	for image in $(IMAGES); do echo $$image; done
+	@$(foreach p,$(filter-out base,$(ALL_PRESETS)),echo $(p);)
 
 $(VERBOSE).SILENT: display_images
 
-#
-# build implicit rule
-#
-
-$(STANDARD_IMAGES): %: %/Dockerfile base
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/$@:latest \
-		$(TAG_FLAG) $(ORG)/$@:$(TAG) \
-		--build-arg ORG=$(ORG) \
-		--build-arg IMAGE=$(ORG)/$@ \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		$@
-	rm -rf $@/imagefiles
-
-$(MULTIARCH_IMAGES): %: %/Dockerfile base-$(HOST_ARCH)
-	mkdir -p $@/imagefiles && cp -r imagefiles $@/
-	$(BUILD_DOCKER) $(BUILD_CMD) $(TAG_FLAG) $(ORG)/$@:latest-$(HOST_ARCH) \
-		$(TAG_FLAG) $(ORG)/$@:$(TAG)-$(HOST_ARCH) \
-		--build-arg ORG=$(ORG) \
-		--build-arg IMAGE=$(ORG)/$@ \
-		--build-arg HOST_ARCH=$(HOST_ARCH) \
-		--build-arg VERSION=$(TAG) \
-		--build-arg VCS_REF=`git rev-parse --short HEAD` \
-		--build-arg VCS_URL=`git config --get remote.origin.url` \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		$@
-	rm -rf $@/imagefiles
-
 clean:
-	for d in $(IMAGES) ; do rm -rf $$d/imagefiles ; done
-	for d in $(IMAGES) ; do rm -rf $(BIN)/dockcross-$$d ; done
-	for d in $(GEN_IMAGE_DOCKERFILES) ; do rm -f $$d ; done
-	rm -f Dockerfile
+	@$(foreach p,$(ALL_PRESETS),$(MAKE) $(p).clean &&) true
+	@rm -rf $(BIN_DIR)
 
 purge: clean
-# Remove all untagged images
-	$(TEST_DOCKER) container ls -aq | xargs -r $(DOCKER) container rm -f
-# Remove all images with organization (ex dockcross/*)
-	$(BUILD_DOCKER) images --filter=reference='$(ORG)/*' --format='{{.Repository}}:{{.Tag}}' | xargs -r $(DOCKER) rmi -f
+	$(DOCKER_EXEC) images --filter='reference=$(ORG)/*' --format='{{.Repository}}:{{.Tag}}' | xargs -r $(DOCKER_EXEC) rmi -f
+	$(DOCKER_EXEC) builder prune -f
 
-# Check bash syntax
 bash-check:
 	find . -type f \( -name "*.sh" -o -name "*.bash" \) -print0 | xargs -0 -P"$(shell nproc)" -I{} \
-		$(SHELLCHECK) --check-sourced --color=auto --format=gcc --severity=warning --shell=bash --enable=all "{}"
+	  $(DOCKER_EXEC) run --rm -v "$(PWD)":/mnt -w /mnt $(SHELLCHECK_IMAGE) --check-sourced --color=auto --format=gcc --severity=warning --shell=bash --enable=all "{}"
 
-#
-# testing implicit rule
-#
-.SECONDEXPANSION:
-$(addsuffix .test,$(STANDARD_IMAGES)): $$(basename $$@)
-	$(TEST_DOCKER) run $(RM) $(ORG)/$(basename $@):latest > $(BIN)/dockcross-$(basename $@) \
-		&& chmod +x $(BIN)/dockcross-$(basename $@)
-	$(BIN)/dockcross-$(basename $@) -i $(ORG)/$(basename $@):latest python3 test/run.py $($@_ARGS)
+docker-container-builder:
+	$(DOCKER_EXEC) buildx create --name mybuilder --use
+	$(DOCKER_EXEC) buildx inspect --bootstrap
+	$(DOCKER_EXEC) buildx inspect mybuilder
 
-.SECONDEXPANSION:
-$(addsuffix .test,$(MULTIARCH_IMAGES) web-wasi-threads): $$(basename $$@)
-	$(TEST_DOCKER) run $(RM) $(ORG)/$(basename $@):latest-$(HOST_ARCH) > $(BIN)/dockcross-$(basename $@) \
-		&& chmod +x $(BIN)/dockcross-$(basename $@)
-	$(BIN)/dockcross-$(basename $@) -i $(ORG)/$(basename $@):latest-$(HOST_ARCH) python3 test/run.py $($@_ARGS)
-
-.SECONDEXPANSION:
-$(addsuffix .tag-$(HOST_ARCH),$(MULTIARCH_IMAGES) web-wasi-threads web-wasm): $$(basename $$@)
-	$(BUILD_DOCKER) tag $(ORG)/$(basename $@):latest-$(HOST_ARCH) \
-		 $(ORG)/$(basename $@):$(TAG)-$(HOST_ARCH)
-
-.SECONDEXPANSION:
-$(addsuffix .push-$(HOST_ARCH),$(MULTIARCH_IMAGES) web-wasi-threads web-wasm): $$(basename $$@)
-	$(BUILD_DOCKER) push $(ORG)/$(basename $@):latest-$(HOST_ARCH) \
-		&& $(BUILD_DOCKER) push $(ORG)/$(basename $@):$(TAG)-$(HOST_ARCH)
-
-.SECONDEXPANSION:
-$(addsuffix .push,$(STANDARD_IMAGES) $(NON_STANDARD_IMAGES)): $$(basename $$@)
-	$(BUILD_DOCKER) push $(ORG)/$(basename $@):latest \
-		&& $(BUILD_DOCKER) push $(ORG)/$(basename $@):$(TAG)
-
-.SECONDEXPANSION:
-$(addsuffix .manifest,$(MULTIARCH_IMAGES) web-wasi-threads web-wasm): $$(basename $$@)
-	$(MANIFEST_TOOL) push from-args \
-		--platforms linux/amd64,linux/arm64 \
-		--template $(ORG)/$(basename $@):latest-ARCH \
-		--target $(ORG)/$(basename $@):latest
-
-.SECONDEXPANSION:
-$(addsuffix .push,$(MULTIARCH_IMAGES) web-wasi-threads web-wasm): $$(basename $$@).manifest
-	$(MANIFEST_TOOL) push from-args \
-		--platforms linux/amd64,linux/arm64 \
-		--template $(ORG)/$(basename $@):$(TAG)-ARCH \
-		--target $(ORG)/$(basename $@):$(TAG)
-
-#
-# testing prerequisites implicit rule
-#
-test.prerequisites:
-	mkdir -p $(BIN)
-
-$(addsuffix .test,base $(IMAGES)): test.prerequisites
-
-.PHONY: base images $(IMAGES) test %.test clean purge bash-check display_images
+docker-default-builder:
+	$(DOCKER_EXEC) buildx use default
