@@ -17,22 +17,6 @@ git fetch origin --tags
 git remote add upstream https://github.com/WebAssembly/wasi-sdk
 git fetch upstream wasi-sdk-${WASI_VERSION}
 
-# Recent wasmtime releases require the threads and shared-memory wasm
-# features to be enabled explicitly. WASI_SDK_RUNWASI is a single cache
-# variable shared by every test target (wasi, wasip1, wasip2, and their
-# -threads variants), so overriding it globally breaks the non-threads
-# targets. Instead, route only the `*-threads` targets through the
-# wrapper by patching the per-test runner selection in tests/CMakeLists.txt.
-cat > /usr/local/bin/wasmtime-run-threads.sh <<'EOS'
-#!/usr/bin/env bash
-exec wasmtime run -W threads=y,shared-memory=y -S threads=y,cli=y "$@"
-EOS
-chmod +x /usr/local/bin/wasmtime-run-threads.sh
-sed -i '/if(target MATCHES threads)/a\
-        if(runwasi)\
-          set(runwasi "/usr/local/bin/wasmtime-run-threads.sh")\
-        endif()' tests/CMakeLists.txt
-
 ./ci/build.sh
 cd build/dist
 tar xzf wasi-toolchain-*.tar.gz --strip-components=1 -C /opt/wasi-sdk
